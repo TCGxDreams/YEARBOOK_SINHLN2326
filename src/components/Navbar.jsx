@@ -85,7 +85,7 @@ const Navbar = ({ darkMode, toggleDarkMode }) => {
           )}
 
           <button
-            className="btn-ghost theme-toggle"
+            className="theme-toggle"
             onClick={toggleDarkMode}
             data-tooltip={darkMode ? 'Giao diện sáng' : 'Giao diện tối'}
           >
@@ -93,7 +93,7 @@ const Navbar = ({ darkMode, toggleDarkMode }) => {
           </button>
 
           <button
-            className="btn-ghost logout-btn"
+            className="logout-btn"
             onClick={handleLogout}
             aria-label="Đăng xuất"
             data-tooltip="Đăng xuất"
@@ -102,7 +102,7 @@ const Navbar = ({ darkMode, toggleDarkMode }) => {
           </button>
 
           <button
-            className="btn-ghost mobile-menu-btn"
+            className="mobile-menu-btn"
             onClick={() => setMobileOpen(!mobileOpen)}
             aria-label="Toggle menu"
           >
