@@ -76,7 +76,10 @@ INSERT INTO members (mshs, full_name, short_name, color, role) VALUES
   ('232444', 'Hồ Ngọc Bảo Uyên',           'Uyên',    '#9f1239', 'member'),
   ('232445', 'Lê Phương Uyên',              'Uyên',    '#0369a1', 'member'),
   ('232447', 'Phan Hải Uyên',               'Uyên',    '#86198f', 'member'),
-  ('232448', 'Lê Thúy Vương',              'Vương',   '#166534', 'member')
+  ('232448', 'Lê Thúy Vương',              'Vương',   '#166534', 'member'),
+  ('242500', 'Lý Viễn Triệu Quang',       'Quang',   '#ef4444', 'teacher'),
+  ('252600', 'Nguyễn Trần Bảo Linh',      'Linh',    '#3b82f6', 'teacher'),
+  ('232400', 'Đoàn Ngọc Anh Duy',         'Duy',     '#10b981', 'teacher')
 ON CONFLICT (mshs) DO NOTHING;
 
 -- ────────────────────────────────────────────────────────────

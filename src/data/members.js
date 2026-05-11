@@ -56,6 +56,9 @@ export const localMembers = [
   { id: 39, mshs: '232445', full_name: 'Lê Phương Uyên',              short_name: 'Uyên',    color: avatarColors[38], role: 'member' },
   { id: 40, mshs: '232447', full_name: 'Phan Hải Uyên',               short_name: 'Uyên',    color: avatarColors[39], role: 'member' },
   { id: 41, mshs: '232448', full_name: 'Lê Thúy Vương',              short_name: 'Vương',   color: avatarColors[40], role: 'member' },
+  { id: 42, mshs: '242500', full_name: 'Lý Viễn Triệu Quang',       short_name: 'Quang',   color: '#ef4444', role: 'teacher' },
+  { id: 43, mshs: '252600', full_name: 'Nguyễn Trần Bảo Linh',      short_name: 'Linh',    color: '#3b82f6', role: 'teacher' },
+  { id: 44, mshs: '232400', full_name: 'Đoàn Ngọc Anh Duy',         short_name: 'Duy',     color: '#10b981', role: 'teacher' },
 ];
 
 // MSHS hợp lệ
