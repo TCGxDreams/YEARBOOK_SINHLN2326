@@ -126,6 +126,19 @@ body.dark-mode {
   padding: 0;
 }
 
+button {
+  -webkit-appearance: none;
+  -moz-appearance: none;
+  appearance: none;
+  border: none;
+  outline: none;
+  background: transparent;
+  color: inherit;
+  font: inherit;
+  cursor: pointer;
+  padding: 0;
+}
+
 html {
   scroll-behavior: smooth;
   overflow-x: hidden;
