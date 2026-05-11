@@ -1,10 +1,60 @@
 import { useState, useEffect } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
-import { PenTool, X, Send, Heart, Loader2 } from 'lucide-react';
+import { PenTool, X, Send, Heart, Loader2, ChevronDown, ChevronUp } from 'lucide-react';
 import { supabase } from '../lib/supabase';
 import { useAuth } from '../contexts/AuthContext';
 import './Pages.css';
 
+const MAX_LENGTH = 150;
+
+/* ─── Message Note with collapse/expand ────── */
+const MessageNote = ({ msg, index, noteColors, pinColors, handleLike, formatDate, itemVariants }) => {
+  const [expanded, setExpanded] = useState(false);
+  const isLong = msg.content.length > MAX_LENGTH;
+  const displayContent = isLong && !expanded
+    ? msg.content.slice(0, MAX_LENGTH) + '...'
+    : msg.content;
+
+  return (
+    <motion.div
+      className="message-note"
+      variants={itemVariants}
+      style={{
+        '--note-color': noteColors[index % noteColors.length],
+        '--pin-color': pinColors[index % pinColors.length],
+      }}
+      whileHover={{ scale: 1.03, rotate: 0, zIndex: 10 }}
+    >
+      <div className="note-header">
+        <div className="note-author">{msg.author}</div>
+        <div className="note-to">gửi {msg.recipient}</div>
+      </div>
+      <div className={`note-content ${expanded ? 'expanded' : ''}`}>
+        {displayContent}
+      </div>
+      {isLong && (
+        <button
+          className="note-toggle-btn"
+          onClick={() => setExpanded(prev => !prev)}
+        >
+          {expanded ? (
+            <><ChevronUp size={14} /> Thu gọn</>
+          ) : (
+            <><ChevronDown size={14} /> Xem thêm</>
+          )}
+        </button>
+      )}
+      <div className="note-footer">
+        <button className="note-like-btn" onClick={() => handleLike(msg.id)}>
+          <Heart size={14} /> {msg.likes || 0}
+        </button>
+        <div className="note-date">{formatDate(msg.created_at)}</div>
+      </div>
+    </motion.div>
+  );
+};
+
+/* ─── Messages Page ────────────────────────── */
 const Messages = () => {
   const { member } = useAuth();
   const [showForm, setShowForm] = useState(false);
@@ -229,28 +279,16 @@ const Messages = () => {
           animate="show"
         >
           {messages.map((msg, index) => (
-            <motion.div
+            <MessageNote
               key={msg.id}
-              className="message-note"
-              variants={itemVariants}
-              style={{
-                '--note-color': noteColors[index % noteColors.length],
-                '--pin-color': pinColors[index % pinColors.length],
-              }}
-              whileHover={{ scale: 1.03, rotate: 0, zIndex: 10 }}
-            >
-              <div className="note-header">
-                <div className="note-author">{msg.author}</div>
-                <div className="note-to">gửi {msg.recipient}</div>
-              </div>
-              <div className="note-content">{msg.content}</div>
-              <div className="note-footer">
-                <button className="note-like-btn" onClick={() => handleLike(msg.id)}>
-                  <Heart size={14} /> {msg.likes || 0}
-                </button>
-                <div className="note-date">{formatDate(msg.created_at)}</div>
-              </div>
-            </motion.div>
+              msg={msg}
+              index={index}
+              noteColors={noteColors}
+              pinColors={pinColors}
+              handleLike={handleLike}
+              formatDate={formatDate}
+              itemVariants={itemVariants}
+            />
           ))}
         </motion.div>
       )}
@@ -259,3 +297,4 @@ const Messages = () => {
 };
 
 export default Messages;
+
