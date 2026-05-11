@@ -21,7 +21,9 @@ CREATE TABLE IF NOT EXISTS members (
 );
 
 ALTER TABLE members ENABLE ROW LEVEL SECURITY;
+DROP POLICY IF EXISTS "members_select" ON members;
 CREATE POLICY "members_select" ON members FOR SELECT TO authenticated USING (true);
+DROP POLICY IF EXISTS "members_update" ON members;
 CREATE POLICY "members_update" ON members FOR UPDATE TO authenticated
   USING (
     mshs = replace(split_part(auth.jwt()->>'email', '@', 1), 'student', '')
@@ -91,9 +93,13 @@ CREATE TABLE IF NOT EXISTS messages (
 );
 
 ALTER TABLE messages ENABLE ROW LEVEL SECURITY;
+DROP POLICY IF EXISTS "messages_select" ON messages;
 CREATE POLICY "messages_select" ON messages FOR SELECT TO authenticated USING (true);
+DROP POLICY IF EXISTS "messages_insert" ON messages;
 CREATE POLICY "messages_insert" ON messages FOR INSERT TO authenticated WITH CHECK (true);
+DROP POLICY IF EXISTS "messages_update" ON messages;
 CREATE POLICY "messages_update" ON messages FOR UPDATE TO authenticated USING (true) WITH CHECK (true);
+DROP POLICY IF EXISTS "messages_delete" ON messages;
 CREATE POLICY "messages_delete" ON messages FOR DELETE TO authenticated
   USING (
     author_mshs = replace(split_part(auth.jwt()->>'email', '@', 1), 'student', '')
@@ -123,9 +129,13 @@ CREATE TABLE IF NOT EXISTS gallery (
 );
 
 ALTER TABLE gallery ENABLE ROW LEVEL SECURITY;
+DROP POLICY IF EXISTS "gallery_select" ON gallery;
 CREATE POLICY "gallery_select" ON gallery FOR SELECT TO authenticated USING (true);
+DROP POLICY IF EXISTS "gallery_insert" ON gallery;
 CREATE POLICY "gallery_insert" ON gallery FOR INSERT TO authenticated WITH CHECK (true);
+DROP POLICY IF EXISTS "gallery_update" ON gallery;
 CREATE POLICY "gallery_update" ON gallery FOR UPDATE TO authenticated USING (true) WITH CHECK (true);
+DROP POLICY IF EXISTS "gallery_delete" ON gallery;
 CREATE POLICY "gallery_delete" ON gallery FOR DELETE TO authenticated
   USING (
     uploaded_by = replace(split_part(auth.jwt()->>'email', '@', 1), 'student', '')

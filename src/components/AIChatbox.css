@@ -306,3 +306,13 @@
     bottom: 5rem;
   }
 }
+
+/* Mobile Fixes */
+@media (max-width: 480px) {
+  .chatbox-toggle {
+    bottom: 1.5rem;
+    right: 1.5rem;
+    width: 50px;
+    height: 50px;
+  }
+}

@@ -11,6 +11,7 @@ const Messages = () => {
   const [messages, setMessages] = useState([]);
   const [loading, setLoading] = useState(true);
   const [formData, setFormData] = useState({ to: '', content: '' });
+  const [isAnonymous, setIsAnonymous] = useState(false);
   const [submitting, setSubmitting] = useState(false);
 
   // Lấy tin nhắn từ Supabase
@@ -54,7 +55,7 @@ const Messages = () => {
     setSubmitting(true);
 
     const newMsg = {
-      author: member?.name || 'Ẩn danh',
+      author: isAnonymous ? 'Ẩn danh' : (member?.full_name || 'Ẩn danh'),
       author_mshs: member?.mshs || null,
       recipient: formData.to || 'Cả lớp',
       content: formData.content.trim(),
@@ -80,6 +81,7 @@ const Messages = () => {
     }
 
     setFormData({ to: '', content: '' });
+    setIsAnonymous(false);
     setShowForm(false);
     setSubmitting(false);
   }
@@ -167,9 +169,19 @@ const Messages = () => {
               </button>
               <h2 className="form-title">Viết Lưu Bút</h2>
               <p style={{ textAlign: 'center', color: 'var(--text-secondary)', marginBottom: '1.5rem', fontSize: '0.9rem' }}>
-                Đăng với tên: <strong>{member?.name}</strong>
+                Đăng với tên: <strong>{isAnonymous ? 'Ẩn danh' : (member?.full_name || 'Ẩn danh')}</strong>
               </p>
               <form onSubmit={handleSubmit} className="write-form">
+                <div className="form-group checkbox-group" style={{ display: 'flex', alignItems: 'center', gap: '0.5rem', marginBottom: '1rem' }}>
+                  <input
+                    type="checkbox"
+                    id="anonymous"
+                    checked={isAnonymous}
+                    onChange={(e) => setIsAnonymous(e.target.checked)}
+                    style={{ width: 'auto', cursor: 'pointer' }}
+                  />
+                  <label htmlFor="anonymous" style={{ margin: 0, cursor: 'pointer', fontSize: '0.9rem' }}>Đăng ẩn danh (Không hiện tên)</label>
+                </div>
                 <div className="form-group">
                   <label>Gửi đến</label>
                   <input
