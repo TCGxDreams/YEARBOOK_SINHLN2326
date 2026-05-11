@@ -485,6 +485,11 @@ body.dark-mode .member-role {
   white-space: nowrap;
   overflow: hidden;
   text-overflow: ellipsis;
+  transition: color var(--transition-normal);
+}
+
+.gallery-item:hover .gallery-caption {
+  color: #fff;
 }
 
 /* ─── Lightbox ─────────────────────────────── */
