@@ -6,7 +6,7 @@ import './AIChatbox.css';
 
 /* ─── Gemini API Config ────────────────────── */
 const GEMINI_API_KEY = import.meta.env.VITE_GEMINI_API_KEY;
-const GEMINI_MODEL = 'gemini-2.0-flash';
+const GEMINI_MODEL = 'gemini-3.1-flash-lite';
 const GEMINI_URL = GEMINI_API_KEY
   ? `https://generativelanguage.googleapis.com/v1beta/models/${GEMINI_MODEL}:generateContent?key=${GEMINI_API_KEY}`
   : null;
@@ -100,6 +100,9 @@ async function getGeminiResponse(conversationHistory) {
           temperature: 0.85,
           topP: 0.95,
           maxOutputTokens: 300,
+          thinkingConfig: {
+            thinkingLevel: 'MINIMAL',
+          },
         },
         safetySettings: [
           { category: 'HARM_CATEGORY_HARASSMENT', threshold: 'BLOCK_NONE' },
