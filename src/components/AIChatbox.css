@@ -1,0 +1,308 @@
+/* ═══════════════════════════════════════════════
+   AI Chatbox Styles
+   ═══════════════════════════════════════════════ */
+
+/* ─── Toggle Button ────────────────────────── */
+.chatbox-toggle {
+  position: fixed;
+  bottom: 2rem;
+  right: 2rem;
+  width: 58px;
+  height: 58px;
+  border-radius: 50%;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  z-index: 999;
+  border: none;
+  cursor: pointer;
+  color: white;
+  background: linear-gradient(135deg, var(--ptnk-blue) 0%, var(--ptnk-blue-light) 100%);
+  box-shadow: 0 8px 25px rgba(0, 51, 153, 0.35);
+}
+
+.chatbox-toggle::before {
+  content: '';
+  position: absolute;
+  inset: -4px;
+  border-radius: 50%;
+  background: linear-gradient(135deg, var(--ptnk-blue), var(--ptnk-gold));
+  z-index: -1;
+  opacity: 0.4;
+  animation: pulse 2s ease-in-out infinite;
+}
+
+/* ─── Chat Window ──────────────────────────── */
+.chatbox-window {
+  position: fixed;
+  bottom: 2rem;
+  right: 2rem;
+  width: 380px;
+  height: 550px;
+  max-height: calc(100vh - 4rem);
+  z-index: 1000;
+  display: flex;
+  flex-direction: column;
+  overflow: hidden;
+  background: var(--bg-color) !important;
+  border-radius: var(--radius-lg) !important;
+  box-shadow: 0 20px 60px rgba(0, 0, 0, 0.2) !important;
+}
+
+/* ─── Header ───────────────────────────────── */
+.chatbox-header {
+  padding: 0.875rem 1rem;
+  background: linear-gradient(135deg, var(--ptnk-blue), var(--ptnk-blue-light));
+  color: white;
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+}
+
+.chatbox-title {
+  display: flex;
+  align-items: center;
+  gap: 0.75rem;
+}
+
+.chatbox-avatar {
+  width: 34px;
+  height: 34px;
+  border-radius: 50%;
+  background: rgba(255, 255, 255, 0.2);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+
+.chatbox-name {
+  display: block;
+  font-weight: 600;
+  font-size: 0.9rem;
+  font-family: 'Be Vietnam Pro', sans-serif;
+}
+
+.chatbox-status {
+  display: block;
+  font-size: 0.7rem;
+  opacity: 0.8;
+  font-family: 'Be Vietnam Pro', sans-serif;
+  color: #4ade80;
+}
+
+.chatbox-close {
+  background: rgba(255, 255, 255, 0.1);
+  border: none;
+  color: white;
+  cursor: pointer;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  width: 32px;
+  height: 32px;
+  border-radius: 50%;
+  transition: background var(--transition-fast);
+}
+
+.chatbox-close:hover {
+  background: rgba(255, 255, 255, 0.2);
+}
+
+/* ─── Messages ─────────────────────────────── */
+.chatbox-messages {
+  flex: 1;
+  overflow-y: auto;
+  padding: 1rem;
+  display: flex;
+  flex-direction: column;
+  gap: 0.75rem;
+  background: var(--bg-secondary);
+}
+
+.chat-message {
+  display: flex;
+  width: 100%;
+  gap: 0.5rem;
+  align-items: flex-end;
+}
+
+.chat-message.user {
+  justify-content: flex-end;
+}
+
+.chat-message.ai {
+  justify-content: flex-start;
+}
+
+.ai-avatar {
+  width: 28px;
+  height: 28px;
+  min-width: 28px;
+  border-radius: 50%;
+  background: linear-gradient(135deg, var(--ptnk-blue), var(--ptnk-blue-light));
+  color: white;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  flex-shrink: 0;
+}
+
+.message-bubble {
+  max-width: 80%;
+  padding: 0.65rem 0.9rem;
+  border-radius: var(--radius-md);
+  font-size: 0.85rem;
+  line-height: 1.55;
+  font-family: 'Be Vietnam Pro', sans-serif;
+}
+
+.chat-message.ai .message-bubble {
+  background: var(--card-bg);
+  border: 1px solid var(--border-color);
+  border-bottom-left-radius: 4px;
+  color: var(--text-primary);
+}
+
+.chat-message.user .message-bubble {
+  background: linear-gradient(135deg, var(--ptnk-blue), var(--ptnk-blue-light));
+  color: white;
+  border-bottom-right-radius: 4px;
+}
+
+/* ─── Typing Indicator ─────────────────────── */
+.typing-indicator {
+  display: flex;
+  gap: 4px;
+  padding: 0.75rem 1rem !important;
+}
+
+.typing-indicator .dot {
+  width: 7px;
+  height: 7px;
+  border-radius: 50%;
+  background: var(--text-muted);
+  animation: typingBounce 1.2s ease-in-out infinite;
+}
+
+.typing-indicator .dot:nth-child(2) {
+  animation-delay: 0.2s;
+}
+
+.typing-indicator .dot:nth-child(3) {
+  animation-delay: 0.4s;
+}
+
+@keyframes typingBounce {
+  0%, 60%, 100% { transform: translateY(0); }
+  30% { transform: translateY(-6px); }
+}
+
+/* ─── Quick Prompts ────────────────────────── */
+.quick-prompts {
+  display: flex;
+  gap: 0.5rem;
+  padding: 0.5rem 1rem;
+  overflow-x: auto;
+  background: var(--bg-secondary);
+  border-top: 1px solid var(--border-color);
+}
+
+.quick-prompt-btn {
+  white-space: nowrap;
+  padding: 0.4rem 0.8rem;
+  border-radius: var(--radius-full);
+  border: 1px solid var(--border-color);
+  background: var(--card-bg);
+  color: var(--text-secondary);
+  font-size: 0.78rem;
+  font-family: 'Be Vietnam Pro', sans-serif;
+  cursor: pointer;
+  transition: all var(--transition-fast);
+}
+
+.quick-prompt-btn:hover {
+  border-color: var(--ptnk-blue);
+  color: var(--ptnk-blue);
+  background: rgba(0, 51, 153, 0.04);
+}
+
+/* ─── Input ────────────────────────────────── */
+.chatbox-input {
+  display: flex;
+  padding: 0.75rem;
+  background: var(--bg-color);
+  border-top: 1px solid var(--border-color);
+  gap: 0.5rem;
+}
+
+.chatbox-input input {
+  flex: 1;
+  padding: 0.65rem 1rem;
+  border-radius: var(--radius-full);
+  border: 1.5px solid var(--border-color);
+  background: var(--bg-secondary);
+  color: var(--text-primary);
+  font-family: 'Be Vietnam Pro', sans-serif;
+  font-size: 0.9rem;
+  outline: none;
+  transition: border-color var(--transition-fast);
+}
+
+.chatbox-input input:focus {
+  border-color: var(--ptnk-blue-light);
+}
+
+.chatbox-input input:disabled {
+  opacity: 0.6;
+}
+
+.send-btn {
+  width: 38px;
+  height: 38px;
+  border-radius: 50%;
+  border: none;
+  background: linear-gradient(135deg, var(--ptnk-blue), var(--ptnk-blue-light));
+  color: white;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  cursor: pointer;
+  transition: transform var(--transition-fast), opacity var(--transition-fast);
+  flex-shrink: 0;
+}
+
+.send-btn:hover:not(:disabled) {
+  transform: scale(1.08);
+}
+
+.send-btn:disabled {
+  opacity: 0.4;
+  cursor: default;
+}
+
+/* ─── Responsive ───────────────────────────── */
+@media (max-width: 480px) {
+  .chatbox-window {
+    width: calc(100% - 1rem);
+    height: calc(100% - 1rem);
+    max-height: 100vh;
+    bottom: 0.5rem;
+    right: 0.5rem;
+    border-radius: var(--radius-lg) !important;
+  }
+
+  .chatbox-toggle {
+    bottom: 1.5rem;
+    right: 1.5rem;
+  }
+}
+
+@media (max-width: 768px) {
+  .chatbox-toggle {
+    bottom: 5rem;
+  }
+  
+  .chatbox-window {
+    bottom: 5rem;
+  }
+}

@@ -1,0 +1,385 @@
+@import url('https://fonts.googleapis.com/css2?family=Be+Vietnam+Pro:ital,wght@0,300;0,400;0,500;0,600;0,700;1,400;1,500;1,600&display=swap');
+
+:root {
+  /* Colors: Primary (PTNK Navy) */
+  --primary-900: #0a2540;
+  --primary-800: #14366b;
+  --primary-700: #1f4e8c;
+  --primary-600: #2563a8;
+  
+  /* Colors: Secondary (Sky Blue) */
+  --secondary-600: #4a90c2;
+  --secondary-500: #6ba4d9;
+  --secondary-400: #8fbde5;
+  --secondary-300: #b3d4ee;
+
+  /* Colors: Tints */
+  --tint-100: #e8f1f9;
+  --tint-50:  #f4f8fc;
+  --tint-25:  #fafcfe;
+
+  /* Colors: Neutral */
+  --neutral-900: #0f1419;
+  --neutral-700: #3d4852;
+  --neutral-500: #7a8794;
+  --neutral-300: #c5ccd4;
+  --neutral-100: #eef1f4;
+  --white: #ffffff;
+
+  /* Colors: Semantic */
+  --success: #10a37f;
+  --error:   #dc2626;
+  --warning: #d97706;
+
+  /* Legacy Mapping (Temporary to avoid breaking all components at once) */
+  --ptnk-blue: var(--primary-700);
+  --ptnk-blue-dark: var(--primary-900);
+  --ptnk-blue-light: var(--secondary-500);
+  --ptnk-blue-muted: var(--secondary-400);
+  --ptnk-gold: var(--warning);
+  --ptnk-gold-light: #fcd34d;
+
+  /* Theme Setup */
+  --bg-color: var(--white);
+  --bg-secondary: var(--tint-50);
+  --bg-gradient: var(--tint-25);
+  --text-primary: var(--neutral-900);
+  --text-secondary: var(--neutral-700);
+  --text-muted: var(--neutral-500);
+  --text-light: var(--white);
+  --border-color: var(--neutral-100);
+  --card-bg: var(--white);
+
+  /* Gradients */
+  --gradient-primary: linear-gradient(135deg, var(--primary-700) 0%, var(--secondary-600) 100%);
+  --gradient-soft: linear-gradient(180deg, var(--tint-50) 0%, var(--white) 100%);
+  --gradient-mesh: radial-gradient(circle at top left, var(--tint-100) 0%, transparent 40%),
+                   radial-gradient(circle at bottom right, var(--secondary-300) 0%, transparent 40%);
+
+  /* Glassmorphism */
+  --glass-bg: rgba(255, 255, 255, 0.85);
+  --glass-border: rgba(31, 78, 140, 0.08);
+  --glass-shadow: 0 8px 32px 0 rgba(31, 78, 140, 0.05);
+
+  /* Spacing */
+  --space-1: 4px;
+  --space-2: 8px;
+  --space-3: 12px;
+  --space-4: 16px;
+  --space-5: 20px;
+  --space-6: 24px;
+  --space-8: 32px;
+  --space-10: 40px;
+  --space-12: 48px;
+  --space-16: 64px;
+  --space-20: 80px;
+  --space-24: 96px;
+
+  /* Radius */
+  --radius-sm: 8px;
+  --radius-md: 14px;
+  --radius-lg: 24px;
+  --radius-xl: 32px;
+  --radius-full: 9999px;
+
+  /* Shadows (Navy tinted) */
+  --shadow-xs: 0 1px 2px rgba(31, 78, 140, 0.06);
+  --shadow-sm: 0 2px 8px rgba(31, 78, 140, 0.08);
+  --shadow-md: 0 8px 24px rgba(31, 78, 140, 0.10);
+  --shadow-lg: 0 16px 48px rgba(31, 78, 140, 0.14);
+  --shadow-glow: 0 0 40px rgba(74, 144, 194, 0.25);
+
+  /* Transitions */
+  --transition-fast: 0.15s cubic-bezier(0.4, 0, 0.2, 1);
+  --transition-normal: 0.28s cubic-bezier(0.4, 0, 0.2, 1);
+  --transition-slow: 0.6s cubic-bezier(0.4, 0, 0.2, 1);
+}
+
+body.dark-mode {
+  --bg-color: #0b0f14;
+  --bg-secondary: #121820;
+  --bg-gradient: #0b0f14;
+  --text-primary: #eef1f4;
+  --text-secondary: #c5ccd4;
+  --text-muted: #7a8794;
+  
+  --glass-bg: rgba(18, 24, 32, 0.85);
+  --glass-border: rgba(255, 255, 255, 0.08);
+  --glass-shadow: 0 8px 32px 0 rgba(0, 0, 0, 0.4);
+  
+  --card-bg: #151b24;
+  --border-color: #242c38;
+
+  --shadow-xs: 0 1px 2px rgba(0, 0, 0, 0.3);
+  --shadow-sm: 0 2px 8px rgba(0, 0, 0, 0.3);
+  --shadow-md: 0 8px 24px rgba(0, 0, 0, 0.4);
+  --shadow-lg: 0 16px 48px rgba(0, 0, 0, 0.5);
+  
+  --gradient-soft: linear-gradient(180deg, #121820 0%, #0b0f14 100%);
+  --gradient-mesh: radial-gradient(circle at top left, rgba(31,78,140, 0.15) 0%, transparent 40%),
+                   radial-gradient(circle at bottom right, rgba(74,144,194, 0.1) 0%, transparent 40%);
+}
+
+* {
+  box-sizing: border-box;
+  margin: 0;
+  padding: 0;
+}
+
+html {
+  scroll-behavior: smooth;
+}
+
+body {
+  font-family: 'Be Vietnam Pro', -apple-system, BlinkMacSystemFont, sans-serif;
+  font-feature-settings: "kern", "liga";
+  background: var(--bg-gradient);
+  background-attachment: fixed;
+  color: var(--text-primary);
+  line-height: 1.65;
+  font-size: 17px;
+  min-height: 100vh;
+  overflow-x: hidden;
+  transition: background var(--transition-slow), color var(--transition-slow);
+}
+
+h1, h2, h3, h4, h5, h6 {
+  font-family: 'Be Vietnam Pro', sans-serif;
+  color: var(--primary-900);
+  line-height: 1.15;
+  letter-spacing: -0.025em;
+  font-weight: 600;
+}
+
+body.dark-mode h1, body.dark-mode h2, body.dark-mode h3,
+body.dark-mode h4, body.dark-mode h5, body.dark-mode h6 {
+  color: var(--secondary-400);
+}
+
+a {
+  text-decoration: none;
+  color: inherit;
+}
+
+img {
+  max-width: 100%;
+  height: auto;
+}
+
+/* ─── Glassmorphism ────────────────────────────────────────── */
+.glass {
+  background: var(--glass-bg);
+  backdrop-filter: blur(20px) saturate(180%);
+  -webkit-backdrop-filter: blur(20px) saturate(180%);
+  border: 1px solid var(--glass-border);
+  box-shadow: var(--glass-shadow);
+  border-radius: var(--radius-md);
+}
+
+.glass-card {
+  background: var(--glass-bg);
+  backdrop-filter: blur(16px) saturate(150%);
+  -webkit-backdrop-filter: blur(16px) saturate(150%);
+  border: 1px solid var(--glass-border);
+  border-radius: 20px;
+  box-shadow: var(--shadow-sm);
+  transition: transform var(--transition-normal), box-shadow var(--transition-normal);
+}
+
+.glass-card:hover {
+  transform: translateY(-6px);
+  box-shadow: var(--shadow-lg);
+}
+
+/* ─── Layout ───────────────────────────────────────────────── */
+.container {
+  width: 100%;
+  padding: 0 1.25rem;
+}
+
+@media (min-width: 640px) {
+  .container { padding: 0 2rem; }
+}
+
+@media (min-width: 1024px) {
+  .container { padding: 0 4rem; }
+}
+
+@media (min-width: 1440px) {
+  .container { padding: 0 6rem; }
+}
+
+.section {
+  padding: 5rem 0;
+}
+
+.grid {
+  display: grid;
+  gap: 2rem;
+}
+
+/* ─── Utilities ────────────────────────────────────────────── */
+.flex-center {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+
+/* ─── Buttons ──────────────────────────────────────────────── */
+.btn {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  padding: 10px 24px;
+  border-radius: 12px;
+  font-weight: 500;
+  font-size: 15px;
+  transition: all var(--transition-fast);
+  cursor: pointer;
+  border: none;
+  font-family: 'Be Vietnam Pro', sans-serif;
+  gap: 8px;
+  position: relative;
+  overflow: hidden;
+}
+
+.btn-primary {
+  background: var(--gradient-primary);
+  color: white;
+  box-shadow: var(--shadow-sm);
+  border: 1px solid rgba(255,255,255,0.1);
+}
+
+.btn-primary:hover {
+  transform: translateY(-2px);
+  box-shadow: var(--shadow-md);
+  filter: brightness(1.1);
+}
+
+.btn-outline {
+  background: transparent;
+  color: var(--primary-700);
+  border: 1.5px solid var(--primary-700);
+}
+
+body.dark-mode .btn-outline {
+  color: var(--secondary-400);
+  border-color: var(--secondary-400);
+}
+
+.btn-outline:hover {
+  background: rgba(31, 78, 140, 0.06);
+  transform: translateY(-1px);
+}
+
+body.dark-mode .btn-outline:hover {
+  background: rgba(143, 189, 229, 0.1);
+}
+
+.btn-ghost {
+  background: transparent;
+  color: var(--text-secondary);
+  position: relative;
+  border-radius: 8px;
+  padding: 8px 16px;
+}
+
+.btn-ghost:hover {
+  color: var(--primary-700);
+  background: rgba(31, 78, 140, 0.04);
+}
+
+body.dark-mode .btn-ghost:hover {
+  color: var(--secondary-400);
+  background: rgba(255, 255, 255, 0.05);
+}
+
+/* ─── Animations ───────────────────────────────────────────── */
+@keyframes fadeIn {
+  from { opacity: 0; }
+  to { opacity: 1; }
+}
+
+@keyframes slideUp {
+  from { transform: translateY(30px); opacity: 0; }
+  to { transform: translateY(0); opacity: 1; }
+}
+
+@keyframes pulse {
+  0%, 100% { opacity: 1; }
+  50% { opacity: 0.5; }
+}
+
+@keyframes shimmer {
+  0% { background-position: -200% 0; }
+  100% { background-position: 200% 0; }
+}
+
+@keyframes float {
+  0% { transform: translate(0, 0) scale(1); }
+  100% { transform: translate(50px, 50px) scale(1.1); }
+}
+
+.animate-fade-in {
+  animation: fadeIn 0.8s ease forwards;
+}
+
+.animate-slide-up {
+  animation: slideUp 0.8s ease forwards;
+}
+
+/* ─── Scrollbar ────────────────────────────────────────────── */
+::-webkit-scrollbar {
+  width: 6px;
+}
+
+::-webkit-scrollbar-track {
+  background: transparent;
+}
+
+::-webkit-scrollbar-thumb {
+  background: var(--text-muted);
+  border-radius: 3px;
+}
+
+::-webkit-scrollbar-thumb:hover {
+  background: var(--ptnk-blue);
+}
+
+/* ─── Selection ────────────────────────────────────────────── */
+::selection {
+  background: rgba(0, 51, 153, 0.2);
+  color: var(--ptnk-blue-dark);
+}
+
+body.dark-mode ::selection {
+  background: rgba(51, 102, 204, 0.3);
+  color: var(--ptnk-blue-light);
+}
+
+/* ─── Tooltip ──────────────────────────────────────────────── */
+[data-tooltip] {
+  position: relative;
+}
+
+[data-tooltip]::after {
+  content: attr(data-tooltip);
+  position: absolute;
+  bottom: 100%;
+  left: 50%;
+  transform: translateX(-50%) translateY(-4px);
+  padding: 0.5rem 0.75rem;
+  font-size: 0.8rem;
+  white-space: nowrap;
+  background: var(--text-primary);
+  color: var(--bg-color);
+  border-radius: var(--radius-sm);
+  opacity: 0;
+  pointer-events: none;
+  transition: opacity var(--transition-fast), transform var(--transition-fast);
+}
+
+[data-tooltip]:hover::after {
+  opacity: 1;
+  transform: translateX(-50%) translateY(-8px);
+}

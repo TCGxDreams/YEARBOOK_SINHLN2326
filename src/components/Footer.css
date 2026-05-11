@@ -1,0 +1,124 @@
+.footer {
+  position: relative;
+  background: var(--ptnk-blue-dark);
+  color: rgba(255, 255, 255, 0.8);
+  padding-top: 0;
+  margin-top: 4rem;
+}
+
+.footer-wave {
+  position: relative;
+  margin-bottom: -2px;
+}
+
+.footer-wave svg {
+  display: block;
+  width: 100%;
+  height: 80px;
+}
+
+.footer-wave path {
+  fill: var(--ptnk-blue-dark);
+}
+
+.footer-content {
+  padding: 3rem 1.5rem 2rem;
+}
+
+.footer-grid {
+  display: grid;
+  grid-template-columns: 2fr 1fr 1.5fr;
+  gap: 3rem;
+  margin-bottom: 3rem;
+}
+
+.footer-brand h3 {
+  font-size: 1.5rem;
+  color: white;
+  margin-bottom: 0.5rem;
+}
+
+.footer-brand p {
+  font-size: 0.95rem;
+  opacity: 0.75;
+}
+
+.footer-quote {
+  margin-top: 1rem;
+  font-family: 'Be Vietnam Pro', sans-serif; font-style: italic;
+  font-size: 1.2rem !important;
+  color: var(--ptnk-gold-light) !important;
+  opacity: 1 !important;
+}
+
+.footer-links h4,
+.footer-contact h4 {
+  color: white;
+  font-family: 'Be Vietnam Pro', sans-serif;
+  font-size: 1rem;
+  font-weight: 600;
+  margin-bottom: 1rem;
+}
+
+.footer-links a {
+  display: block;
+  color: rgba(255, 255, 255, 0.6);
+  margin-bottom: 0.5rem;
+  transition: color var(--transition-fast), padding-left var(--transition-fast);
+  font-size: 0.9rem;
+}
+
+.footer-links a:hover {
+  color: white;
+  padding-left: 4px;
+}
+
+.footer-contact-link {
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+  color: rgba(255, 255, 255, 0.6);
+  margin-bottom: 0.75rem;
+  transition: color var(--transition-fast);
+  font-size: 0.9rem;
+}
+
+.footer-contact-link:hover {
+  color: white;
+}
+
+.footer-bottom {
+  border-top: 1px solid rgba(255, 255, 255, 0.1);
+  padding-top: 1.5rem;
+  text-align: center;
+  font-size: 0.85rem;
+}
+
+.footer-bottom p {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 0.25rem;
+}
+
+.heart-icon {
+  color: #ef4444;
+  fill: #ef4444;
+  animation: heartbeat 1.5s ease-in-out infinite;
+}
+
+@keyframes heartbeat {
+  0%, 100% { transform: scale(1); }
+  50% { transform: scale(1.2); }
+}
+
+@media (max-width: 768px) {
+  .footer-grid {
+    grid-template-columns: 1fr;
+    gap: 2rem;
+  }
+  
+  .footer-content {
+    padding-bottom: 6rem;
+  }
+}
