@@ -8,6 +8,8 @@
   padding-top: 5rem;
   min-height: 100vh;
   padding-bottom: 3rem;
+  max-width: 100%;
+  overflow-x: hidden;
 }
 
 .page-header {
@@ -93,6 +95,7 @@
   justify-content: center;
   margin-top: 1.25rem;
   flex-wrap: wrap;
+  max-width: 100%;
 }
 
 .filter-tab {
@@ -374,8 +377,9 @@ body.dark-mode .member-role {
 /* Use CSS Grid instead of masonry — more reliable */
 .gallery-masonry {
   display: grid;
-  grid-template-columns: repeat(auto-fill, minmax(280px, 1fr));
-  gap: 2rem;
+  grid-template-columns: repeat(auto-fill, minmax(min(280px, 100%), 1fr));
+  gap: 1.5rem;
+  width: 100%;
 }
 
 .gallery-item {

@@ -133,6 +133,14 @@ body.dark-mode .nav-indicator {
   justify-content: center;
   border-radius: var(--radius-sm);
   overflow: hidden;
+  border: none;
+  outline: none;
+  -webkit-appearance: none;
+  appearance: none;
+  padding: 0;
+  background: transparent;
+  color: var(--text-secondary);
+  cursor: pointer;
 }
 
 .mobile-menu-btn {
@@ -141,6 +149,13 @@ body.dark-mode .nav-indicator {
   height: 38px;
   align-items: center;
   justify-content: center;
+  border: none;
+  outline: none;
+  -webkit-appearance: none;
+  appearance: none;
+  background: transparent;
+  color: var(--text-secondary);
+  cursor: pointer;
 }
 
 /* Mobile menu */
@@ -247,6 +262,12 @@ body.dark-mode .user-badge {
   justify-content: center;
   border-radius: var(--radius-sm);
   padding: 0;
+  border: none;
+  outline: none;
+  -webkit-appearance: none;
+  appearance: none;
+  background: transparent;
+  cursor: pointer;
 }
 
 .logout-btn:hover {
