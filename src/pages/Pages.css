@@ -379,10 +379,10 @@ body.dark-mode .member-role {
    Gallery Page
    ═══════════════════════════════════════════════ */
 
-/* Use CSS Grid instead of masonry — more reliable */
+/* ✅ FIX: dùng auto-fill + minmax cho mọi viewport (kể cả 13") */
 .gallery-masonry {
   display: grid;
-  grid-template-columns: repeat(auto-fill, minmax(min(280px, 100%), 1fr));
+  grid-template-columns: repeat(auto-fill, minmax(240px, 1fr));
   gap: 1.5rem;
   width: 100%;
 }
@@ -390,6 +390,7 @@ body.dark-mode .member-role {
 .gallery-item {
   background: white;
   padding: 12px 12px 48px 12px;
+  margin: 6px;
   border-radius: 4px;
   position: relative;
   cursor: pointer;
@@ -1033,6 +1034,7 @@ body.dark-mode .member-role {
 
 /* ═══════════════════════════════════════════════
    Responsive — Multi-device
+   (✅ Đã bỏ hết override .gallery-masonry — để auto-fill tự lo)
    ═══════════════════════════════════════════════ */
 
 /* Small phones */
@@ -1063,10 +1065,6 @@ body.dark-mode .member-role {
 
   .member-info h3 {
     font-size: 0.9rem;
-  }
-
-  .gallery-masonry {
-    grid-template-columns: 1fr;
   }
 
   .messages-board {
@@ -1104,10 +1102,6 @@ body.dark-mode .member-role {
     grid-template-columns: repeat(3, 1fr);
   }
 
-  .gallery-masonry {
-    grid-template-columns: repeat(2, 1fr);
-  }
-
   .messages-board {
     grid-template-columns: repeat(2, 1fr);
   }
@@ -1115,10 +1109,6 @@ body.dark-mode .member-role {
 
 /* Desktop */
 @media (min-width: 769px) and (max-width: 1199px) {
-  .gallery-masonry {
-    grid-template-columns: repeat(3, 1fr);
-  }
-
   .members-grid {
     grid-template-columns: repeat(4, 1fr);
   }
@@ -1130,13 +1120,6 @@ body.dark-mode .member-role {
 
 /* Large desktop */
 @media (min-width: 1200px) {
-  .gallery-masonry {
-    display: grid;
-    grid-template-columns: repeat(auto-fill, minmax(260px, 1fr));
-    gap: 1.5rem;
-    width: 100%;
-  }
-
   .members-grid {
     grid-template-columns: repeat(5, 1fr);
   }
@@ -1148,10 +1131,6 @@ body.dark-mode .member-role {
 
 /* Ultra-wide */
 @media (min-width: 1600px) {
-  .gallery-masonry {
-    grid-template-columns: repeat(5, 1fr);
-  }
-
   .members-grid {
     grid-template-columns: repeat(6, 1fr);
   }
