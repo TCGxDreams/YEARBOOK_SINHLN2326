@@ -2,6 +2,7 @@ import { useState, useRef, useEffect } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
 import { X, Send, Sparkles, Wifi, WifiOff } from 'lucide-react';
 import SYSTEM_PROMPT from '../data/system_prompt.md?raw';
+import { supabase } from '../lib/supabase';
 import './AIChatbox.css';
 
 /* ─── Gemini API Config ────────────────────── */
@@ -75,12 +76,17 @@ function getLocalResponse(userMessage) {
   return defaultResponses[Math.floor(Math.random() * defaultResponses.length)];
 }
 
-/* ─── Gemini API call ──────────────────────── */
-async function getGeminiResponse(conversationHistory) {
+/* ─── Gemini API call với context + retry ───── */
+async function getGeminiResponse(conversationHistory, contextData, retries = 2) {
   if (!GEMINI_URL) {
     console.warn('[AIChatbox] VITE_GEMINI_API_KEY không tồn tại, dùng chế độ offline.');
     return null;
   }
+
+  // Ghép system prompt + dữ liệu lớp real-time
+  const fullSystemPrompt = contextData
+    ? `${SYSTEM_PROMPT}\n\n---\n# DỮ LIỆU LỚP REAL-TIME\n${contextData}\n\nKhi user hỏi về thành viên hoặc lưu bút, TRA CỨU dữ liệu này và trả lời CHÍNH XÁC. KHÔNG bịa.`
+    : SYSTEM_PROMPT;
 
   try {
     const contents = conversationHistory.map(msg => ({
@@ -92,17 +98,13 @@ async function getGeminiResponse(conversationHistory) {
       method: 'POST',
       headers: { 'Content-Type': 'application/json' },
       body: JSON.stringify({
-        system_instruction: {
-          parts: [{ text: SYSTEM_PROMPT }],
-        },
+        system_instruction: { parts: [{ text: fullSystemPrompt }] },
         contents,
         generationConfig: {
           temperature: 0.85,
           topP: 0.95,
           maxOutputTokens: 300,
-          thinkingConfig: {
-            thinkingLevel: 'MINIMAL',
-          },
+          thinkingConfig: { thinkingLevel: 'MINIMAL' },
         },
         safetySettings: [
           { category: 'HARM_CATEGORY_HARASSMENT', threshold: 'BLOCK_NONE' },
@@ -112,6 +114,14 @@ async function getGeminiResponse(conversationHistory) {
         ],
       }),
     });
+
+    // ✅ Retry 503 (overload) / 429 (rate limit) — KHÔNG kill Gemini permanently
+    if ((response.status === 503 || response.status === 429) && retries > 0) {
+      const delay = (3 - retries) * 1500;
+      console.warn(`[AIChatbox] Gemini ${response.status}, retry trong ${delay}ms...`);
+      await new Promise(r => setTimeout(r, delay));
+      return getGeminiResponse(conversationHistory, contextData, retries - 1);
+    }
 
     if (!response.ok) {
       const errorData = await response.json().catch(() => ({}));
@@ -147,11 +157,33 @@ const AIChatbox = () => {
   const [inputText, setInputText] = useState('');
   const [isTyping, setIsTyping] = useState(false);
   const [isGeminiConnected, setIsGeminiConnected] = useState(!!GEMINI_API_KEY);
+  const [knowledgeBase, setKnowledgeBase] = useState('');  // ⭐ Markdown từ ai_context
   const messagesEndRef = useRef(null);
 
+  // Auto-scroll messages
   useEffect(() => {
     messagesEndRef.current?.scrollIntoView({ behavior: 'smooth' });
   }, [messages]);
+
+  // ⭐ Fetch ai_context khi mở chatbox lần đầu
+  useEffect(() => {
+    if (isOpen && !knowledgeBase && isGeminiConnected) {
+      supabase
+        .from('ai_context')
+        .select('content')
+        .eq('id', 1)
+        .single()
+        .then(({ data, error }) => {
+          if (error) {
+            console.error('[AIChatbox] ❌ Không fetch được ai_context:', error.message);
+            return;
+          }
+          const len = data?.content?.length || 0;
+          console.log(`[AIChatbox] ✅ Loaded context, length: ${len}`);
+          setKnowledgeBase(data?.content || '');
+        });
+    }
+  }, [isOpen, knowledgeBase, isGeminiConnected]);
 
   const handleSend = async (e) => {
     e.preventDefault();
@@ -167,14 +199,14 @@ const AIChatbox = () => {
 
     let aiText = null;
 
-    // Thử gọi Gemini trước
+    // Thử gọi Gemini trước — truyền cả knowledgeBase
     if (isGeminiConnected) {
       const recentHistory = updatedMessages.slice(-10);
-      aiText = await getGeminiResponse(recentHistory, knowledgeBase);
+      aiText = await getGeminiResponse(recentHistory, knowledgeBase);  // ⭐ truyền knowledgeBase
 
       if (!aiText) {
-        console.warn('[AIChatbox] Gemini thất bại → chuyển sang chế độ offline (keywords).');
-        setIsGeminiConnected(false);
+        console.warn('[AIChatbox] Gemini fail tạm thời → dùng keyword cho tin này.');
+        // ❌ KHÔNG setIsGeminiConnected(false) — lần sau vẫn thử lại Gemini bình thường
       }
     }
 
@@ -313,12 +345,5 @@ const AIChatbox = () => {
     </>
   );
 };
-async function getChatContext() {
-  const { data } = await supabase
-    .from('ai_context')
-    .select('content')
-    .eq('id', 1)
-    .single();
-  return data?.content || '';
-}
+
 export default AIChatbox;
