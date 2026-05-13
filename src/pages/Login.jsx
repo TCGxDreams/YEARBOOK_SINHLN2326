@@ -4,6 +4,7 @@ import { LogIn, Eye, EyeOff, AlertCircle, Sparkles } from 'lucide-react';
 import { useAuth } from '../contexts/AuthContext';
 import { useNavigate } from 'react-router-dom';
 import './Login.css';
+import logo from '../assets/logo.png';
 
 const Login = () => {
   const { login, user } = useAuth();
@@ -60,10 +61,8 @@ const Login = () => {
             animate={{ scale: 1 }}
             transition={{ delay: 0.2, type: 'spring', stiffness: 200 }}
           >
-            <Sparkles size={32} />
+            <img src={logo} alt="SINHLN2326" style={{ width: '100%', height: '100%', objectFit: 'contain' }} />
           </motion.div>
-          <h1>SINHLN2326</h1>
-          <p className="login-subtitle">Lưu bút Online — Phổ thông Năng khiếu</p>
         </div>
 
         {/* Form */}

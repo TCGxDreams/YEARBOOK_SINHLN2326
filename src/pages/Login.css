@@ -68,12 +68,12 @@
 }
 
 .login-logo {
-  width: 64px;
-  height: 64px;
+  width: 80px;
+  /* to hơn cho đẹp */
+  height: 80px;
   margin: 0 auto 1.25rem;
-  border-radius: 16px;
-  background: linear-gradient(135deg, var(--ptnk-blue), var(--ptnk-blue-light));
-  color: white;
+  background: transparent;
+  /* bỏ gradient cũ */
   display: flex;
   align-items: center;
   justify-content: center;
@@ -188,7 +188,9 @@
 }
 
 @keyframes spin {
-  to { transform: rotate(360deg); }
+  to {
+    transform: rotate(360deg);
+  }
 }
 
 /* Hint */
