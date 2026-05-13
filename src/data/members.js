@@ -61,6 +61,14 @@ export const localMembers = [
   { id: 44, mshs: '232400', full_name: 'Đoàn Ngọc Anh Duy', short_name: 'Duy', color: '#10b981', role: 'teacher' },
   { id: 45, mshs: '232688', full_name: 'Trần Đại Đình Phong', short_name: 'Phong', color: '#ef4444', role: 'teacher' },
   { id: 46, mshs: '232611', full_name: 'Lưu Thị Thanh Tú', short_name: 'Tú', color: '#3b82f6', role: 'teacher' },
+  { id: 47, mshs: '232417', full_name: 'Nguyễn Thuận Hiếu', short_name: 'Hiếu', color: '#ef4444', role: 'member' },
+  { id: 48, mshs: '232419', full_name: 'Vũ Ngọc Phương Khánh', short_name: 'Khánh', color: '#2563eb', role: 'member' },
+  { id: 49, mshs: '232427', full_name: 'Đỗ Hoàng Minh', short_name: 'Minh', color: '#ef4444', role: 'member' },
+  { id: 50, mshs: '232428', full_name: 'Nguyễn Huy Hoàng Minh', short_name: 'Minh', color: '#10b891', role: 'member' },
+  { id: 51, mshs: '232429', fullname: 'Đinh Nhật Mỹ', short_name: 'Mỹ', color: '#10b891', role: 'member' },
+  { id: 52, mshs: '232446', full_name: 'Phạm Châu Minh Uyên', short_name: 'Uyên', color: '2563eb', role: 'member' },
+  { id: 53, mshs: '232431', full_name: 'Đặng Thanh Nhàn', short_name: 'Nhàn', color: '10b891', role: 'member' },
+  { id: 54, mshs: '252601', full_name: 'Phạm Hữu Phước', short_name: 'Phước', color: 'ef4444', role: 'teacher' }
 ];
 
 // MSHS hợp lệ
