@@ -3,6 +3,7 @@ import { motion } from 'framer-motion';
 import { useState } from 'react';
 import { Home, Users, Image as ImageIcon, BookHeart, Moon, Sun, Menu, X, LogOut, User, Shield } from 'lucide-react';
 import { useAuth } from '../contexts/AuthContext';
+import logo from '../assets/logo.png';
 import './Navbar.css';
 
 const Navbar = ({ darkMode, toggleDarkMode }) => {
@@ -31,7 +32,7 @@ const Navbar = ({ darkMode, toggleDarkMode }) => {
     >
       <div className="navbar-container container">
         <Link to="/" className="navbar-logo" onClick={() => setMobileOpen(false)}>
-          <div className="logo-icon">P</div>
+          <img src={logo} alt="SINHLN2326" className="logo-img" />
           <span className="logo-text">SINHLN2326</span>
         </Link>
 
@@ -162,6 +163,7 @@ const Navbar = ({ darkMode, toggleDarkMode }) => {
         </ul>
       </motion.div>
     </motion.nav>
+
   );
 };
 

@@ -33,19 +33,11 @@ body.dark-mode .navbar {
   gap: 0.6rem;
 }
 
-.logo-icon {
-  width: 36px;
-  height: 36px;
-  border-radius: 10px;
-  background: var(--gradient-primary);
-  color: white;
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  font-family: 'Be Vietnam Pro', sans-serif;
-  font-weight: 700;
-  font-size: 1.4rem;
-  box-shadow: var(--shadow-sm);
+.logo-img {
+  width: 40px;
+  height: 40px;
+  object-fit: contain;
+  flex-shrink: 0;
 }
 
 .logo-text {
