@@ -170,7 +170,7 @@ const AIChatbox = () => {
     // Thử gọi Gemini trước
     if (isGeminiConnected) {
       const recentHistory = updatedMessages.slice(-10);
-      aiText = await getGeminiResponse(recentHistory);
+      aiText = await getGeminiResponse(recentHistory, knowledgeBase);
 
       if (!aiText) {
         console.warn('[AIChatbox] Gemini thất bại → chuyển sang chế độ offline (keywords).');
