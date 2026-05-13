@@ -313,5 +313,12 @@ const AIChatbox = () => {
     </>
   );
 };
-
+async function getChatContext() {
+  const { data } = await supabase
+    .from('ai_context')
+    .select('content')
+    .eq('id', 1)
+    .single();
+  return data?.content || '';
+}
 export default AIChatbox;
