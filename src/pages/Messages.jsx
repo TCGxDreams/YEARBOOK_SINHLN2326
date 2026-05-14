@@ -80,23 +80,15 @@ const Messages = () => {
       if (error) {
         console.warn('Supabase messages table error:', error.message);
         // Dùng dữ liệu mẫu nếu bảng chưa tồn tại
-        setMessages(getDefaultMessages());
       } else {
         setMessages(data || []);
       }
     } catch (err) {
       console.warn('Could not connect to Supabase, using local data');
-      setMessages(getDefaultMessages());
     }
     setLoading(false);
   }
 
-  function getDefaultMessages() {
-    return [
-      { id: '1', author: 'Cô giáo chủ nhiệm', author_mshs: null, recipient: 'Cả lớp SINHLN2326', content: 'Chúc các em 12 SINH-LN luôn giữ mãi ngọn lửa đam mê với Sinh học và đạt kết quả thật cao trong kỳ thi tốt nghiệp! Cô rất tự hào về các em!', likes: 41, created_at: '2026-05-10T10:00:00Z' },
-      { id: '2', author: 'Bạn ẩn danh', author_mshs: null, recipient: 'SINHLN2326', content: 'Ba năm trôi qua nhanh quá. Cảm ơn các bạn đã luôn bên cạnh trong những lúc khó khăn nhất. SINHLN2326 mãi là gia đình!', likes: 35, created_at: '2026-05-09T15:00:00Z' },
-    ];
-  }
 
   async function handleSubmit(e) {
     e.preventDefault();
