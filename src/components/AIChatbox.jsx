@@ -1,18 +1,19 @@
 import { useState, useRef, useEffect } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
-import { X, Send, Sparkles, Wifi, WifiOff } from 'lucide-react';
+import { X, Send, Sparkles, Wifi, WifiOff, Save } from 'lucide-react';
 import SYSTEM_PROMPT from '../data/system_prompt.md?raw';
 import { supabase } from '../lib/supabase';
+import { useAuth } from '../contexts/AuthContext';
 import './AIChatbox.css';
 
-/* ─── Gemini API Config ────────────────────── */
+/* ─── Gemini API Config ──────────────────────── */
 const GEMINI_API_KEY = import.meta.env.VITE_GEMINI_API_KEY;
-const GEMINI_MODEL = 'gemini-3-flash-preview';
+const GEMINI_MODEL = 'gemini-3.1-flash-lite';
 const GEMINI_URL = GEMINI_API_KEY
   ? `https://generativelanguage.googleapis.com/v1beta/models/${GEMINI_MODEL}:generateContent?key=${GEMINI_API_KEY}`
   : null;
 
-/* ─── Fallback: Local keyword-based responses ─── */
+/* ─── Fallback: Local keyword-based responses ── */
 const aiResponses = [
   {
     keywords: ['buồn', 'nhớ', 'thương', 'chia tay', 'xa'],
@@ -31,35 +32,35 @@ const aiResponses = [
   {
     keywords: ['cô', 'thầy', 'giáo viên', 'dạy', 'môn', 'quang', 'linh', 'duy'],
     responses: [
-      'Thầy cô là những người đã đồng hành cùng các bạn suốt 3 năm. Bạn có muốn viết lưu bút gửi thầy/cô không? Mình có thể gợi ý cách viết cho hay nhé! ✍️',
-      'Kỷ niệm với thầy cô luôn đặc biệt. Bạn nhớ nhất tiết học nào? Hay khoảnh khắc nào thầy/cô làm cả lớp bất ngờ?',
+      'Thầy cô là những người đã đồng hành cùng các bạn suốt 3 năm. Bạn có muốn viết lưu bút gửi thầy/cô không?',
+      'Kỷ niệm với thầy cô luôn đặc biệt. Bạn nhớ nhất tiết học nào?',
     ],
   },
   {
     keywords: ['thi', 'học', 'điểm', 'ôn', 'bài', 'đại học'],
     responses: [
-      'Những đêm thức trắng ôn bài cùng nhau — đó mới chính là kỷ niệm "đau thương" nhưng đáng nhớ nhất! 📚 Ai là người hay ngủ gật nhất khi học nhóm?',
-      'Áp lực thi cử rồi cũng sẽ qua. Điều quan trọng là những người đã cùng bạn vượt qua. Hãy ghi lại cảm xúc đó trong lưu bút nhé!',
+      'Những đêm thức trắng ôn bài cùng nhau — đó mới chính là kỷ niệm "đau thương" nhưng đáng nhớ nhất! 📚',
+      'Áp lực thi cử rồi cũng sẽ qua. Điều quan trọng là những người đã cùng bạn vượt qua.',
     ],
   },
   {
     keywords: ['sinh', 'ptnk', 'năng khiếu', 'lớp'],
     responses: [
-      'SINHLN2326 — một cái tên mà mãi mãi sẽ gắn liền với thanh xuân! 💫 Bạn tự hào nhất về điều gì khi là thành viên của lớp?',
-      'Lớp chuyên Sinh PTNK thì chắc hẳn có rất nhiều kỷ niệm trong phòng thí nghiệm rồi nhỉ? 🔬 Kể cho mình nghe đi!',
+      'SINHLN2326 — một cái tên mà mãi mãi sẽ gắn liền với thanh xuân! 💫',
+      'Lớp chuyên Sinh PTNK thì chắc hẳn có rất nhiều kỷ niệm trong phòng thí nghiệm rồi nhỉ? 🔬',
     ],
   },
   {
     keywords: ['dã ngoại', 'chơi', 'đi', 'chuyến', 'trip'],
     responses: [
-      'Những chuyến đi cùng lớp luôn là kỷ niệm tuyệt vời nhất! 🌄 Bạn nhớ chuyến đi nào nhất? Có khoảnh khắc nào "huyền thoại" không?',
-      'Mỗi chuyến đi là một câu chuyện. Bạn hãy viết lại chi tiết nhất có thể — vài năm sau đọc lại sẽ rất xúc động đấy!',
+      'Những chuyến đi cùng lớp luôn là kỷ niệm tuyệt vời nhất! 🌄',
+      'Mỗi chuyến đi là một câu chuyện. Bạn hãy viết lại chi tiết nhất có thể!',
     ],
   },
 ];
 
 const defaultResponses = [
-  'Thật tuyệt! Hãy kể thêm chi tiết nhé — ai có mặt, ở đâu, lúc nào? Càng chi tiết thì lưu bút càng đáng nhớ! ✨',
+  'Thật tuyệt! Hãy kể thêm chi tiết nhé — ai có mặt, ở đâu, lúc nào? ✨',
   'Nghe hay quá! Bạn có muốn viết kỷ niệm này thành một lời nhắn trong phần Lưu Bút không?',
   'Mình thấy đây là kỷ niệm rất đáng để lưu giữ. Bạn thử nhớ lại xem lúc đó mình cảm thấy thế nào nhé 💭',
   'Wow, nghe thú vị lắm! Bạn có thể chia sẻ thêm về những người bạn đã cùng trải qua khoảnh khắc đó không?',
@@ -76,16 +77,27 @@ function getLocalResponse(userMessage) {
   return defaultResponses[Math.floor(Math.random() * defaultResponses.length)];
 }
 
-/* ─── Gemini API call với context + retry ───── */
+/* ─── Lọc markdown khỏi response của AI ──────── */
+function stripMarkdown(text) {
+  return text
+    .replace(/\*\*(.+?)\*\*/g, '$1')   // **bold** → bold
+    .replace(/__(.+?)__/g, '$1')        // __bold__ → bold
+    .replace(/\*(.+?)\*/g, '$1')        // *italic* → italic
+    .replace(/_(.+?)_/g, '$1')          // _italic_ → italic
+    .replace(/`(.+?)`/g, '$1')          // `code` → code
+    .replace(/^#+\s+/gm, '')            // # heading → heading
+    .replace(/^[-*]\s+/gm, '• ');       // - bullet → • bullet
+}
+
+/* ─── Gemini API call (có context + retry) ──── */
 async function getGeminiResponse(conversationHistory, contextData, retries = 2) {
   if (!GEMINI_URL) {
     console.warn('[AIChatbox] VITE_GEMINI_API_KEY không tồn tại, dùng chế độ offline.');
     return null;
   }
 
-  // Ghép system prompt + dữ liệu lớp real-time
   const fullSystemPrompt = contextData
-    ? `${SYSTEM_PROMPT}\n\n---\n# DỮ LIỆU LỚP REAL-TIME\n${contextData}\n\nKhi user hỏi về thành viên hoặc lưu bút, TRA CỨU dữ liệu này và trả lời CHÍNH XÁC. KHÔNG bịa.`
+    ? `${SYSTEM_PROMPT}\n\n---\n# DỮ LIỆU LỚP REAL-TIME\n${contextData}\n\nKhi user hỏi về thành viên, lưu bút, hoặc kỷ niệm — TRA CỨU dữ liệu này và trả lời CHÍNH XÁC. KHÔNG bịa thông tin.`
     : SYSTEM_PROMPT;
 
   try {
@@ -115,7 +127,7 @@ async function getGeminiResponse(conversationHistory, contextData, retries = 2) 
       }),
     });
 
-    // ✅ Retry 503 (overload) / 429 (rate limit) — KHÔNG kill Gemini permanently
+    // ✅ Retry 503 (overload) / 429 (rate limit)
     if ((response.status === 503 || response.status === 429) && retries > 0) {
       const delay = (3 - retries) * 1500;
       console.warn(`[AIChatbox] Gemini ${response.status}, retry trong ${delay}ms...`);
@@ -137,35 +149,36 @@ async function getGeminiResponse(conversationHistory, contextData, retries = 2) 
       return null;
     }
 
-    return text;
+    return stripMarkdown(text);
   } catch (err) {
     console.error('[AIChatbox] Không thể kết nối Gemini:', err.message);
     return null;
   }
 }
 
-/* ─── Component ────────────────────────────── */
+/* ─── Component ───────────────────────────────── */
 const AIChatbox = () => {
+  const { member } = useAuth();
   const [isOpen, setIsOpen] = useState(false);
   const [messages, setMessages] = useState([
     {
       id: 1,
-      text: 'Chào bạn! Mình là "Nhớ Ơi" — AI hỗ trợ viết lưu bút của lớp SINHLN2326 💙\n\nMình có thể giúp bạn:\n• Gợi nhớ lại kỷ niệm đẹp\n• Gợi ý cách viết lưu bút thật hay\n• Kể chuyện về lớp mình\n\nBạn muốn kể về kỷ niệm nào?',
+      text: 'Chào bạn! Mình là "Nhớ Ơi" — AI hỗ trợ viết lưu bút của lớp SINHLN2326 💙\n\nMình có thể giúp bạn:\n• Gợi nhớ lại kỷ niệm đẹp\n• Gợi ý cách viết lưu bút thật hay\n• Kể chuyện về lớp mình\n\nBạn muốn kể về kỷ niệm nào? Chuyện hay thì bấm "Lưu kỷ niệm" dưới tin để chia sẻ với cả lớp nha!',
       isAi: true,
     },
   ]);
   const [inputText, setInputText] = useState('');
   const [isTyping, setIsTyping] = useState(false);
   const [isGeminiConnected, setIsGeminiConnected] = useState(!!GEMINI_API_KEY);
-  const [knowledgeBase, setKnowledgeBase] = useState('');  // ⭐ Markdown từ ai_context
+  const [knowledgeBase, setKnowledgeBase] = useState('');
   const messagesEndRef = useRef(null);
 
-  // Auto-scroll messages
+  // Auto-scroll
   useEffect(() => {
     messagesEndRef.current?.scrollIntoView({ behavior: 'smooth' });
   }, [messages]);
 
-  // ⭐ Fetch ai_context khi mở chatbox lần đầu
+  // ⭐ Fetch ai_context khi mở chatbox
   useEffect(() => {
     if (isOpen && !knowledgeBase && isGeminiConnected) {
       supabase
@@ -185,6 +198,40 @@ const AIChatbox = () => {
     }
   }, [isOpen, knowledgeBase, isGeminiConnected]);
 
+  // ⭐ Lưu tin của user làm kỷ niệm chung
+  const handleSaveAsMemory = async (messageContent) => {
+    if (!member) {
+      alert('Vui lòng đăng nhập để lưu kỷ niệm!');
+      return;
+    }
+
+    const preview = messageContent.slice(0, 120) + (messageContent.length > 120 ? '...' : '');
+    const confirmed = confirm(
+      'Lưu kỷ niệm này để các bạn khác có thể đọc qua AI?\n\n' +
+      '"' + preview + '"\n\n' +
+      'OK = lưu công khai với tên ' + member.full_name +
+      '\nCancel = huỷ'
+    );
+    if (!confirmed) return;
+
+    const { error } = await supabase.from('shared_memories').insert({
+      author_mshs: member.mshs,
+      author_name: member.full_name,
+      content: messageContent,
+      is_anonymous: false,
+    });
+
+    if (error) {
+      console.error('[AIChatbox] Lỗi lưu memory:', error);
+      alert('Lưu thất bại: ' + error.message);
+      return;
+    }
+
+    // Reset knowledgeBase → lần gọi Gemini tiếp theo fetch context có memory mới
+    setKnowledgeBase('');
+    alert('✨ Đã lưu vào kỷ niệm chung của lớp!');
+  };
+
   const handleSend = async (e) => {
     e.preventDefault();
     if (!inputText.trim() || isTyping) return;
@@ -199,18 +246,15 @@ const AIChatbox = () => {
 
     let aiText = null;
 
-    // Thử gọi Gemini trước — truyền cả knowledgeBase
     if (isGeminiConnected) {
       const recentHistory = updatedMessages.slice(-10);
-      aiText = await getGeminiResponse(recentHistory, knowledgeBase);  // ⭐ truyền knowledgeBase
+      aiText = await getGeminiResponse(recentHistory, knowledgeBase);
 
       if (!aiText) {
-        console.warn('[AIChatbox] Gemini fail tạm thời → dùng keyword cho tin này.');
-        // ❌ KHÔNG setIsGeminiConnected(false) — lần sau vẫn thử lại Gemini bình thường
+        console.warn('[AIChatbox] Gemini fail tạm → dùng keyword cho tin này.');
       }
     }
 
-    // Fallback: dùng keyword-based responses
     if (!aiText) {
       await new Promise(r => setTimeout(r, 500 + Math.random() * 700));
       aiText = getLocalResponse(userMsg);
@@ -299,6 +343,17 @@ const AIChatbox = () => {
                         {i < msg.text.split('\n').length - 1 && <br />}
                       </span>
                     ))}
+
+                    {/* ⭐ Nút "Lưu kỷ niệm" — chỉ trên tin user > 20 ký tự */}
+                    {!msg.isAi && msg.text.length > 20 && (
+                      <button
+                        className="save-memory-btn"
+                        onClick={() => handleSaveAsMemory(msg.text)}
+                        title="Lưu làm kỷ niệm chung của lớp"
+                      >
+                        <Save size={11} /> Lưu kỷ niệm
+                      </button>
+                    )}
                   </div>
                 </motion.div>
               ))}
