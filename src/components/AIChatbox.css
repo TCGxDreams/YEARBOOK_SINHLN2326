@@ -193,8 +193,16 @@
 }
 
 @keyframes typingBounce {
-  0%, 60%, 100% { transform: translateY(0); }
-  30% { transform: translateY(-6px); }
+
+  0%,
+  60%,
+  100% {
+    transform: translateY(0);
+  }
+
+  30% {
+    transform: translateY(-6px);
+  }
 }
 
 /* ─── Quick Prompts ────────────────────────── */
@@ -285,7 +293,7 @@
   .chatbox-toggle {
     bottom: 5rem;
   }
-  
+
   .chatbox-window {
     bottom: 0;
     right: 0;
@@ -297,4 +305,26 @@
     border-radius: 0 !important;
     z-index: 9999;
   }
+}
+
+.save-memory-btn {
+  display: inline-flex;
+  align-items: center;
+  gap: 4px;
+  margin-top: 6px;
+  padding: 3px 8px;
+  background: rgba(255, 255, 255, 0.2);
+  border: 1px solid rgba(255, 255, 255, 0.3);
+  border-radius: 10px;
+  color: white;
+  font-size: 0.7rem;
+  font-family: 'Be Vietnam Pro', sans-serif;
+  cursor: pointer;
+  opacity: 0.7;
+  transition: opacity 0.2s, background 0.2s;
+}
+
+.save-memory-btn:hover {
+  opacity: 1;
+  background: rgba(255, 255, 255, 0.35);
 }
