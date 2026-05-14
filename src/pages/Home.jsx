@@ -131,7 +131,7 @@ const Home = () => {
             transition={{ duration: 0.8, delay: 0.6 }}
             className="hero-subtitle"
           >
-            Nơi lưu giữ những thanh xuân rực rỡ nhất của tập thể 12 Chuyên Sinh
+            Nơi lưu giữ những thanh xuân rực rỡ nhất của tập thể 12 SinhLN
             <br />
             trường Phổ thông Năng khiếu. Ba năm một chặng đường, mãi là một gia đình.
           </motion.p>
@@ -207,7 +207,7 @@ const Home = () => {
               <span className="bento-label">01 — THÀNH VIÊN</span>
               <h3 className="bento-card-title">Gia Đình SINHLN</h3>
               <p className="bento-card-desc">
-                41 mảnh ghép tạo nên tập thể 12 Chuyên Sinh — mỗi người một cá tính, nhưng luôn gắn kết bền chặt.
+                41 mảnh ghép tạo nên tập thể 12 SinhLN mỗi người một cá tính, nhưng luôn gắn kết bền chặt.
               </p>
             </div>
             <div className="bento-arrow">
