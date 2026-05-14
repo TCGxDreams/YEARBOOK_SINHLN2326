@@ -21,7 +21,11 @@ export async function uploadVideoToDrive(file, onProgress) {
                 'Content-Type': 'application/json',
                 Authorization: `Bearer ${session.access_token}`,
             },
-            body: JSON.stringify({ filename: file.name, mimeType: file.type }),
+            body: JSON.stringify({
+                filename: file.name,
+                mimeType: file.type,
+                origin: window.location.origin, // ⭐ fallback: gửi kèm origin trong body
+            }),
         }
     );
 
@@ -55,7 +59,7 @@ export async function uploadVideoToDrive(file, onProgress) {
                 reject(new Error(`Upload lên Drive thất bại: ${xhr.status}`));
             }
         };
-        xhr.onerror = () => reject(new Error('Lỗi mạng khi upload lên Drive'));
+        xhr.onerror = () => reject(new Error('Lỗi mạng / CORS khi upload lên Drive'));
         xhr.send(file);
     });
 
