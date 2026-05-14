@@ -24,7 +24,7 @@ export async function uploadVideoToDrive(file, onProgress) {
             body: JSON.stringify({
                 filename: file.name,
                 mimeType: file.type,
-                origin: window.location.origin, // ⭐ fallback: gửi kèm origin trong body
+                origin: window.location.origin,
             }),
         }
     );
@@ -56,12 +56,20 @@ export async function uploadVideoToDrive(file, onProgress) {
                     reject(new Error('Drive trả về dữ liệu không hợp lệ'));
                 }
             } else {
-                reject(new Error(`Upload lên Drive thất bại: ${xhr.status}`));
+                // ⭐ IN CHI TIẾT body lỗi từ Google để debug
+                console.error('[uploadVideo] Drive PUT lỗi', xhr.status);
+                console.error('[uploadVideo] Response body:', xhr.responseText);
+                let detail = xhr.responseText;
+                try {
+                    const parsed = JSON.parse(xhr.responseText);
+                    detail = parsed?.error?.message || parsed?.error?.errors?.[0]?.message || xhr.responseText;
+                } catch { /* để nguyên text */ }
+                reject(new Error(`Drive ${xhr.status}: ${detail}`));
             }
         };
         xhr.onerror = () => reject(new Error('Lỗi mạng / CORS khi upload lên Drive'));
         xhr.send(file);
     });
 
-    return driveFile.id; // drive_file_id để lưu vào Supabase
+    return driveFile.id;
 }
