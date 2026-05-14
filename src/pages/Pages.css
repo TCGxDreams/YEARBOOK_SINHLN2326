@@ -1139,3 +1139,85 @@ body.dark-mode .member-role {
     grid-template-columns: repeat(4, 1fr);
   }
 }
+
+/* ─── Video trong Gallery ────────────────────
+   Paste đoạn này vào CUỐI file src/pages/Pages.css
+   ─────────────────────────────────────────── */
+
+/* Badge play đè lên thumbnail video trong lưới */
+.video-play-badge {
+  position: absolute;
+  top: 50%;
+  left: 50%;
+  transform: translate(-50%, -50%);
+  width: 54px;
+  height: 54px;
+  border-radius: 50%;
+  background: rgba(0, 0, 0, 0.55);
+  backdrop-filter: blur(4px);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  cursor: pointer;
+  z-index: 5;
+  transition: transform var(--transition-fast), background var(--transition-fast);
+  pointer-events: auto;
+}
+
+.video-play-badge:hover {
+  transform: translate(-50%, -50%) scale(1.12);
+  background: rgba(0, 51, 153, 0.75);
+}
+
+/* Thumbnail video bị lỗi (Drive chưa public) → nền tối */
+.gallery-item img[src=""] {
+  background: #1a202c;
+}
+
+/* Progress bar khi upload video */
+.upload-progress-wrap {
+  position: relative;
+  width: 100%;
+  height: 22px;
+  background: var(--bg-secondary);
+  border-radius: var(--radius-full);
+  overflow: hidden;
+  border: 1px solid var(--border-color);
+}
+
+.upload-progress-bar {
+  height: 100%;
+  background: linear-gradient(135deg, var(--ptnk-blue), var(--ptnk-blue-light));
+  border-radius: var(--radius-full);
+  transition: width 0.3s ease;
+}
+
+.upload-progress-text {
+  position: absolute;
+  top: 50%;
+  left: 50%;
+  transform: translate(-50%, -50%);
+  font-size: 0.72rem;
+  font-weight: 700;
+  color: var(--text-primary);
+  font-family: 'Be Vietnam Pro', sans-serif;
+}
+
+/* Video player trong lightbox */
+.lightbox-video {
+  width: 80vw;
+  max-width: 900px;
+  height: 65vh;
+  max-height: 600px;
+  border: none;
+  border-radius: var(--radius-md);
+  box-shadow: 0 20px 60px rgba(0, 0, 0, 0.5);
+  background: #000;
+}
+
+@media (max-width: 768px) {
+  .lightbox-video {
+    width: 92vw;
+    height: 52vh;
+  }
+}
