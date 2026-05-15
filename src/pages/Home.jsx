@@ -2,6 +2,9 @@ import { useEffect, useRef, useState } from 'react';
 import { motion, useInView } from 'framer-motion';
 import { ChevronDown, Users, GraduationCap, BookOpen, Sparkles, ArrowRight, ImageIcon, PenTool, Heart, Star } from 'lucide-react';
 import { Link } from 'react-router-dom';
+import bentoMembers from '../assets/bento-members.jpg';
+import bentoGallery from '../assets/bento-gallery.jpg';
+import bentoMessages from '../assets/bento-messages.jpg';
 import './Home.css';
 
 /* ─── Animated counter hook ────────────────── */
@@ -198,7 +201,7 @@ const Home = () => {
         <div className="bento-grid">
           {/* Card: Members */}
           <Link to="/members" className="bento-card bento-card--large">
-            <div className="bento-bg bento-bg--members" />
+            <div className="bento-bg bento-bg--members" style={{ backgroundImage: `url(${bentoMembers})` }} />
             <div className="bento-overlay" />
             <div className="bento-icon-wrap">
               <Users size={24} />
@@ -218,7 +221,7 @@ const Home = () => {
           <div className="bento-col">
             {/* Card: Gallery */}
             <Link to="/gallery" className="bento-card bento-card--medium">
-              <div className="bento-bg bento-bg--gallery" />
+              <div className="bento-bg bento-bg--gallery" style={{ backgroundImage: `url(${bentoGallery})` }} />
               <div className="bento-overlay bento-overlay--warm" />
               <div className="bento-icon-wrap bento-icon--warm">
                 <ImageIcon size={24} />
@@ -237,7 +240,7 @@ const Home = () => {
 
             {/* Card: Messages */}
             <Link to="/messages" className="bento-card bento-card--medium">
-              <div className="bento-bg bento-bg--messages" />
+              <div className="bento-bg bento-bg--messages" style={{ backgroundImage: `url(${bentoMessages})` }} />
               <div className="bento-overlay bento-overlay--blue" />
               <div className="bento-icon-wrap bento-icon--blue">
                 <PenTool size={24} />

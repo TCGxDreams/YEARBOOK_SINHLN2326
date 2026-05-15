@@ -36,19 +36,28 @@
   height: 600px;
   transform: translate(-50%, -55%);
   border-radius: 50%;
-  background: radial-gradient(circle, rgba(31,78,140,0.08) 0%, transparent 70%);
+  background: radial-gradient(circle, rgba(31, 78, 140, 0.08) 0%, transparent 70%);
   animation: auraPulse 4s ease-in-out infinite;
   z-index: 0;
   pointer-events: none;
 }
 
 body.dark-mode .hero::after {
-  background: radial-gradient(circle, rgba(143,189,229,0.06) 0%, transparent 70%);
+  background: radial-gradient(circle, rgba(143, 189, 229, 0.06) 0%, transparent 70%);
 }
 
 @keyframes auraPulse {
-  0%, 100% { transform: translate(-50%, -55%) scale(1); opacity: 0.6; }
-  50% { transform: translate(-50%, -55%) scale(1.15); opacity: 1; }
+
+  0%,
+  100% {
+    transform: translate(-50%, -55%) scale(1);
+    opacity: 0.6;
+  }
+
+  50% {
+    transform: translate(-50%, -55%) scale(1.15);
+    opacity: 1;
+  }
 }
 
 .hero-content {
@@ -80,8 +89,15 @@ body.dark-mode .hero::after {
 }
 
 @keyframes badgeGlow {
-  0%, 100% { box-shadow: 0 0 0 0 rgba(31, 78, 140, 0); }
-  50% { box-shadow: 0 0 20px 2px rgba(31, 78, 140, 0.12); }
+
+  0%,
+  100% {
+    box-shadow: 0 0 0 0 rgba(31, 78, 140, 0);
+  }
+
+  50% {
+    box-shadow: 0 0 20px 2px rgba(31, 78, 140, 0.12);
+  }
 }
 
 body.dark-mode .hero-badge {
@@ -104,14 +120,12 @@ body.dark-mode .hero-title {
 }
 
 .hero-title .highlight {
-  background: linear-gradient(
-    90deg,
-    #1f4e8c 0%,
-    #3a7bd5 25%,
-    #8fbde5 50%,
-    #3a7bd5 75%,
-    #1f4e8c 100%
-  );
+  background: linear-gradient(90deg,
+      #1f4e8c 0%,
+      #3a7bd5 25%,
+      #8fbde5 50%,
+      #3a7bd5 75%,
+      #1f4e8c 100%);
   background-size: 200% auto;
   -webkit-background-clip: text;
   -webkit-text-fill-color: transparent;
@@ -123,8 +137,13 @@ body.dark-mode .hero-title {
 }
 
 @keyframes shimmer {
-  0% { background-position: 0% center; }
-  100% { background-position: 200% center; }
+  0% {
+    background-position: 0% center;
+  }
+
+  100% {
+    background-position: 200% center;
+  }
 }
 
 .hero-subtitle {
@@ -184,9 +203,17 @@ body.dark-mode .particle {
 }
 
 @keyframes float {
-  0% { transform: translate(0, 0) scale(1); }
-  50% { transform: translate(20px, -30px) scale(1.05); }
-  100% { transform: translate(-10px, 15px) scale(0.95); }
+  0% {
+    transform: translate(0, 0) scale(1);
+  }
+
+  50% {
+    transform: translate(20px, -30px) scale(1.05);
+  }
+
+  100% {
+    transform: translate(-10px, 15px) scale(0.95);
+  }
 }
 
 .blob-1 {
@@ -517,7 +544,7 @@ body.dark-mode .section-title {
   transition: all 0.3s ease;
 }
 
-.bento-arrow > * {
+.bento-arrow>* {
   background: rgba(255, 255, 255, 0.15);
   backdrop-filter: blur(8px);
   -webkit-backdrop-filter: blur(8px);
@@ -666,8 +693,13 @@ body.dark-mode .quote-section {
 }
 
 @keyframes spin-slow {
-  from { transform: rotate(0deg); }
-  to { transform: rotate(360deg); }
+  from {
+    transform: rotate(0deg);
+  }
+
+  to {
+    transform: rotate(360deg);
+  }
 }
 
 .quote-text {
@@ -786,4 +818,30 @@ body.dark-mode .quote-section {
     width: 44px;
     height: 44px;
   }
+}
+
+.bento-bg--members {
+  background: linear-gradient(135deg, var(--primary-800), var(--primary-900));
+  background-size: cover;
+  background-position: center;
+}
+
+.bento-bg--gallery {
+  background: linear-gradient(135deg, #7c3aed, #a855f7);
+  background-size: cover;
+  background-position: center;
+}
+
+.bento-bg--messages {
+  background: linear-gradient(135deg, var(--secondary-600), var(--primary-700));
+  background-size: cover;
+  background-position: center;
+}
+
+.bento-overlay {
+  background: linear-gradient(to top,
+      rgba(10, 37, 64, 0.85) 0%,
+      /* tăng/giảm số 0.85 này */
+      rgba(10, 37, 64, 0.3) 50%,
+      transparent 100%);
 }
