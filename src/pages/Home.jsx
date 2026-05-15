@@ -1,7 +1,8 @@
 import { useEffect, useRef, useState } from 'react';
 import { motion, useInView } from 'framer-motion';
-import { ChevronDown, Users, GraduationCap, BookOpen, Sparkles, ArrowRight, ImageIcon, PenTool, Heart, Star } from 'lucide-react';
+import { ChevronDown, Users, GraduationCap, BookOpen, ArrowRight, ImageIcon, PenTool, Heart, Star } from 'lucide-react';
 import { Link } from 'react-router-dom';
+// ⭐ RESTORE: import 3 ảnh nền cho bento cards
 import bentoMembers from '../assets/bento-members.jpg';
 import bentoGallery from '../assets/bento-gallery.jpg';
 import bentoMessages from '../assets/bento-messages.jpg';
@@ -32,48 +33,7 @@ function useCounter(target, duration = 2000) {
   return { count, ref };
 }
 
-/* ─── Floating particles ──────────────────── */
-const Particles = () => {
-  const particles = Array.from({ length: 30 }, (_, i) => ({
-    id: i,
-    size: Math.random() * 6 + 2,
-    x: Math.random() * 100,
-    y: Math.random() * 100,
-    duration: Math.random() * 15 + 10,
-    delay: Math.random() * 5,
-    opacity: Math.random() * 0.3 + 0.1,
-  }));
-
-  return (
-    <div className="particles-container">
-      {particles.map(p => (
-        <motion.div
-          key={p.id}
-          className="particle"
-          style={{
-            width: p.size,
-            height: p.size,
-            left: `${p.x}%`,
-            top: `${p.y}%`,
-          }}
-          animate={{
-            y: [0, -40, 0],
-            x: [0, Math.random() * 30 - 15, 0],
-            opacity: [p.opacity, p.opacity * 2, p.opacity],
-          }}
-          transition={{
-            duration: p.duration,
-            delay: p.delay,
-            repeat: Infinity,
-            ease: 'easeInOut',
-          }}
-        />
-      ))}
-    </div>
-  );
-};
-
-/* ─── Stat card with Lucide icon ───────────── */
+/* ─── Stat card ─────────────────────────────── */
 const StatCard = ({ Icon, value, label, suffix = '' }) => {
   const { count, ref } = useCounter(value);
   return (
@@ -92,6 +52,13 @@ const StatCard = ({ Icon, value, label, suffix = '' }) => {
   );
 };
 
+/* ─── 4-point sparkle SVG ──────────────────── */
+const Sparkle = ({ size = 32 }) => (
+  <svg viewBox="0 0 24 24" fill="currentColor" width={size} height={size}>
+    <path d="M12 1 L13.5 9.5 L22 11 L13.5 12.5 L12 23 L10.5 12.5 L2 11 L10.5 9.5 Z" />
+  </svg>
+);
+
 /* ─── Timeline ─────────────────────────────── */
 const timelineData = [
   { year: '2023', title: 'Năm nhất — Khởi đầu', desc: 'Ngày đầu bước chân vào PTNK, bỡ ngỡ nhưng đầy háo hức. Bắt đầu làm quen với nhau và xây dựng tập thể SINHLN.' },
@@ -103,46 +70,87 @@ const timelineData = [
 const Home = () => {
   return (
     <div className="home-page">
-      {/* ─── HERO ────────────────────────────── */}
+      {/* ═══ HERO: yearbook editorial + sparkle decorations ═══ */}
       <section className="hero">
-        <Particles />
+        {/* Warm decorative blobs */}
+        <div className="hero-warm-blob hero-warm-blob-1" />
+        <div className="hero-warm-blob hero-warm-blob-2" />
+
+        {/* ⭐ Sparkles scattered 4 góc */}
+        <div className="hero-sparkle hero-sparkle-tl"><Sparkle size={28} /></div>
+        <div className="hero-sparkle hero-sparkle-tr"><Sparkle size={20} /></div>
+        <div className="hero-sparkle hero-sparkle-bl"><Sparkle size={24} /></div>
+        <div className="hero-sparkle hero-sparkle-br"><Sparkle size={32} /></div>
+        <div className="hero-sparkle hero-sparkle-ml"><Sparkle size={16} /></div>
+        <div className="hero-sparkle hero-sparkle-mr"><Sparkle size={18} /></div>
 
         <div className="hero-content container">
+          {/* Greeting line với dấu gạch hai bên */}
           <motion.div
-            initial={{ opacity: 0, y: 30 }}
+            initial={{ opacity: 0, y: 20 }}
             animate={{ opacity: 1, y: 0 }}
-            transition={{ duration: 0.8, delay: 0.2 }}
-            className="hero-badge"
+            transition={{ duration: 0.7, delay: 0.1 }}
+            className="hero-greeting"
           >
-            <Sparkles size={14} strokeWidth={2} />
-            <span>Lưu bút Online — Khóa 23-26</span>
+            <span className="dash-line" />
+            <span>Phổ thông Năng khiếu · Khoá 2023 — 2026</span>
+            <span className="dash-line" />
           </motion.div>
 
+          {/* Main title: Ptnkers + SINHLN2326 handwritten */}
           <motion.h1
             initial={{ opacity: 0, y: 30 }}
             animate={{ opacity: 1, y: 0 }}
-            transition={{ duration: 0.8, delay: 0.4 }}
+            transition={{ duration: 0.8, delay: 0.3 }}
             className="hero-title"
           >
-            Ptnkers{' '}
-            <span className="highlight">SINHLN2326</span>
+            <span className="hero-title-pre">Ptnkers</span>
+            <span className="hero-title-main">
+              SINHLN2326
+              <svg
+                className="hero-underline"
+                viewBox="0 0 400 20"
+                preserveAspectRatio="none"
+                aria-hidden="true"
+              >
+                <path
+                  d="M 5,12 Q 80,2 160,12 T 320,11 T 395,13"
+                  fill="none"
+                  stroke="currentColor"
+                  strokeWidth="3"
+                  strokeLinecap="round"
+                />
+              </svg>
+            </span>
           </motion.h1>
 
+          {/* Subtitle ngắn, cảm xúc */}
           <motion.p
-            initial={{ opacity: 0, y: 30 }}
+            initial={{ opacity: 0, y: 20 }}
             animate={{ opacity: 1, y: 0 }}
-            transition={{ duration: 0.8, delay: 0.6 }}
+            transition={{ duration: 0.7, delay: 0.6 }}
             className="hero-subtitle"
           >
-            Nơi lưu giữ những thanh xuân rực rỡ nhất của tập thể 12 SinhLN
+            Ba năm một chặng đường,
             <br />
-            trường Phổ thông Năng khiếu. Ba năm một chặng đường, mãi là một gia đình.
+            mãi là một gia đình.
           </motion.p>
 
+          {/* Heart accent */}
           <motion.div
-            initial={{ opacity: 0, y: 30 }}
+            initial={{ opacity: 0, scale: 0 }}
+            animate={{ opacity: 1, scale: 1 }}
+            transition={{ duration: 0.5, delay: 0.7 }}
+            className="hero-heart"
+          >
+            <Heart size={16} fill="currentColor" />
+          </motion.div>
+
+          {/* CTA buttons */}
+          <motion.div
+            initial={{ opacity: 0, y: 20 }}
             animate={{ opacity: 1, y: 0 }}
-            transition={{ duration: 0.8, delay: 0.8 }}
+            transition={{ duration: 0.7, delay: 0.85 }}
             className="hero-actions"
           >
             <Link to="/messages" className="btn btn-primary">
@@ -151,6 +159,16 @@ const Home = () => {
             <Link to="/gallery" className="btn btn-outline">
               <ImageIcon size={18} /> Xem Kỷ Niệm
             </Link>
+          </motion.div>
+
+          {/* ⭐ Signature dòng cuối — tạo cảm giác "letter signed" */}
+          <motion.div
+            initial={{ opacity: 0 }}
+            animate={{ opacity: 1 }}
+            transition={{ duration: 0.7, delay: 1.1 }}
+            className="hero-signature"
+          >
+            — viết bởi 41 trái tim của SINHLN —
           </motion.div>
         </div>
 
@@ -162,11 +180,6 @@ const Home = () => {
         >
           <ChevronDown size={28} />
         </motion.div>
-
-        {/* Background blobs */}
-        <div className="blob blob-1" />
-        <div className="blob blob-2" />
-        <div className="blob blob-3" />
       </section>
 
       {/* ─── STATS ───────────────────────────── */}
@@ -185,7 +198,7 @@ const Home = () => {
         </motion.div>
       </section>
 
-      {/* ─── BENTO NAVIGATION ─────────────────── */}
+      {/* ═══ BENTO NAVIGATION — ⭐ restore ảnh nền ═══ */}
       <section className="bento-section container section">
         <motion.div
           className="page-header text-center"
@@ -199,9 +212,12 @@ const Home = () => {
         </motion.div>
 
         <div className="bento-grid">
-          {/* Card: Members */}
           <Link to="/members" className="bento-card bento-card--large">
-            <div className="bento-bg bento-bg--members" style={{ backgroundImage: `url(${bentoMembers})` }} />
+            {/* ⭐ Inline backgroundImage cho ảnh thật */}
+            <div
+              className="bento-bg bento-bg--members"
+              style={{ backgroundImage: `url(${bentoMembers})` }}
+            />
             <div className="bento-overlay" />
             <div className="bento-icon-wrap">
               <Users size={24} />
@@ -210,7 +226,7 @@ const Home = () => {
               <span className="bento-label">01 — THÀNH VIÊN</span>
               <h3 className="bento-card-title">Gia Đình SINHLN</h3>
               <p className="bento-card-desc">
-                41 mảnh ghép tạo nên tập thể 12 SinhLN mỗi người một cá tính, nhưng luôn gắn kết bền chặt.
+                41 mảnh ghép tạo nên tập thể 12 Chuyên Sinh — mỗi người một cá tính, nhưng luôn gắn kết bền chặt.
               </p>
             </div>
             <div className="bento-arrow">
@@ -219,9 +235,11 @@ const Home = () => {
           </Link>
 
           <div className="bento-col">
-            {/* Card: Gallery */}
             <Link to="/gallery" className="bento-card bento-card--medium">
-              <div className="bento-bg bento-bg--gallery" style={{ backgroundImage: `url(${bentoGallery})` }} />
+              <div
+                className="bento-bg bento-bg--gallery"
+                style={{ backgroundImage: `url(${bentoGallery})` }}
+              />
               <div className="bento-overlay bento-overlay--warm" />
               <div className="bento-icon-wrap bento-icon--warm">
                 <ImageIcon size={24} />
@@ -238,9 +256,11 @@ const Home = () => {
               </div>
             </Link>
 
-            {/* Card: Messages */}
             <Link to="/messages" className="bento-card bento-card--medium">
-              <div className="bento-bg bento-bg--messages" style={{ backgroundImage: `url(${bentoMessages})` }} />
+              <div
+                className="bento-bg bento-bg--messages"
+                style={{ backgroundImage: `url(${bentoMessages})` }}
+              />
               <div className="bento-overlay bento-overlay--blue" />
               <div className="bento-icon-wrap bento-icon--blue">
                 <PenTool size={24} />

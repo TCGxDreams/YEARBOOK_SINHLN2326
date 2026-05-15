@@ -1,62 +1,171 @@
+/* Import font handwritten Caveat */
+@import url('https://fonts.googleapis.com/css2?family=Caveat:wght@400;500;600;700&display=swap');
+
 .home-page {
   min-height: 100vh;
   position: relative;
   overflow: hidden;
 }
 
-/* ─── HERO ─────────────────────────────────── */
+/* ═══════════════════════════════════════════════
+   HERO — yearbook editorial + sparkle decorations
+   ═══════════════════════════════════════════════ */
 .hero {
   min-height: 100vh;
   position: relative;
   text-align: center;
-  padding: 8rem 0 4rem;
+  padding: 7rem 1.5rem 4rem;
   z-index: 10;
   display: flex;
   flex-direction: column;
   align-items: center;
   justify-content: center;
+  background:
+    radial-gradient(ellipse 80% 60% at 50% 0%, rgba(252, 224, 192, 0.5) 0%, transparent 60%),
+    radial-gradient(ellipse 70% 50% at 50% 100%, rgba(207, 226, 243, 0.4) 0%, transparent 60%),
+    linear-gradient(180deg, #FFF8EE 0%, #FFFAF3 50%, #FAFCFE 100%);
 }
 
+body.dark-mode .hero {
+  background:
+    radial-gradient(ellipse 80% 60% at 50% 0%, rgba(120, 80, 50, 0.25) 0%, transparent 60%),
+    radial-gradient(ellipse 70% 50% at 50% 100%, rgba(30, 60, 100, 0.25) 0%, transparent 60%),
+    linear-gradient(180deg, #1a1410 0%, #121820 60%, #0b0f14 100%);
+}
+
+/* Paper-like grain texture */
 .hero::before {
-  content: "";
+  content: '';
   position: absolute;
   inset: 0;
-  background: var(--gradient-mesh);
-  opacity: 0.6;
-  z-index: -1;
+  background-image:
+    radial-gradient(circle at 20% 30%, rgba(168, 134, 92, 0.07) 1px, transparent 1.5px),
+    radial-gradient(circle at 70% 60%, rgba(168, 134, 92, 0.06) 1px, transparent 1.5px),
+    radial-gradient(circle at 45% 85%, rgba(168, 134, 92, 0.06) 1px, transparent 1.5px);
+  background-size: 80px 80px, 60px 60px, 100px 100px;
+  background-position: 0 0, 30px 30px, 60px 0;
   pointer-events: none;
+  z-index: 1;
+  opacity: 0.7;
+}
+
+body.dark-mode .hero::before {
+  opacity: 0.4;
 }
 
 .hero::after {
-  content: "";
+  display: none;
+}
+
+/* Warm decorative blobs */
+.hero-warm-blob {
   position: absolute;
-  top: 50%;
-  left: 50%;
-  width: 600px;
-  height: 600px;
-  transform: translate(-50%, -55%);
   border-radius: 50%;
-  background: radial-gradient(circle, rgba(31, 78, 140, 0.08) 0%, transparent 70%);
-  animation: auraPulse 4s ease-in-out infinite;
-  z-index: 0;
+  filter: blur(90px);
+  opacity: 0.45;
   pointer-events: none;
+  z-index: 0;
 }
 
-body.dark-mode .hero::after {
-  background: radial-gradient(circle, rgba(143, 189, 229, 0.06) 0%, transparent 70%);
+.hero-warm-blob-1 {
+  top: 8%;
+  left: -8%;
+  width: 380px;
+  height: 380px;
+  background: #FBD7B0;
 }
 
-@keyframes auraPulse {
+.hero-warm-blob-2 {
+  bottom: 10%;
+  right: -8%;
+  width: 320px;
+  height: 320px;
+  background: #C8DCEC;
+  opacity: 0.5;
+}
+
+body.dark-mode .hero-warm-blob-1 {
+  background: rgba(180, 110, 60, 0.25);
+}
+
+body.dark-mode .hero-warm-blob-2 {
+  background: rgba(60, 100, 150, 0.25);
+}
+
+/* ⭐ Sparkle decorations rải 4 góc + 2 ngang giữa */
+.hero-sparkle {
+  position: absolute;
+  color: #C9A876;
+  z-index: 2;
+  pointer-events: none;
+  filter: drop-shadow(0 1px 2px rgba(176, 119, 68, 0.15));
+  animation: sparkle-twinkle 3s ease-in-out infinite;
+}
+
+body.dark-mode .hero-sparkle {
+  color: #D4A574;
+  opacity: 0.6;
+}
+
+.hero-sparkle-tl {
+  top: 12%;
+  left: 9%;
+  opacity: 0.55;
+  transform: rotate(-10deg);
+  animation-delay: 0s;
+}
+
+.hero-sparkle-tr {
+  top: 16%;
+  right: 12%;
+  opacity: 0.45;
+  transform: rotate(15deg);
+  animation-delay: 0.6s;
+}
+
+.hero-sparkle-bl {
+  bottom: 22%;
+  left: 14%;
+  opacity: 0.5;
+  transform: rotate(20deg);
+  animation-delay: 1.2s;
+}
+
+.hero-sparkle-br {
+  bottom: 18%;
+  right: 8%;
+  opacity: 0.6;
+  transform: rotate(-15deg);
+  animation-delay: 1.8s;
+}
+
+.hero-sparkle-ml {
+  top: 48%;
+  left: 6%;
+  opacity: 0.35;
+  transform: rotate(30deg);
+  animation-delay: 0.9s;
+}
+
+.hero-sparkle-mr {
+  top: 42%;
+  right: 6%;
+  opacity: 0.4;
+  transform: rotate(-20deg);
+  animation-delay: 2.1s;
+}
+
+@keyframes sparkle-twinkle {
 
   0%,
   100% {
-    transform: translate(-50%, -55%) scale(1);
-    opacity: 0.6;
+    opacity: var(--sparkle-base, 0.5);
+    transform: scale(1) rotate(var(--sparkle-rot, 0deg));
   }
 
   50% {
-    transform: translate(-50%, -55%) scale(1.15);
-    opacity: 1;
+    opacity: calc(var(--sparkle-base, 0.5) * 1.5);
+    transform: scale(1.15) rotate(var(--sparkle-rot, 0deg));
   }
 }
 
@@ -65,192 +174,176 @@ body.dark-mode .hero::after {
   flex-direction: column;
   align-items: center;
   justify-content: center;
-  max-width: 800px;
+  max-width: 820px;
   margin: 0 auto;
   position: relative;
-  z-index: 2;
+  z-index: 3;
 }
 
-.hero-badge {
+/* Greeting */
+.hero-greeting {
   display: inline-flex;
   align-items: center;
-  gap: 0.5rem;
-  padding: 0.4rem 1.25rem;
-  border-radius: var(--radius-full);
-  font-size: 0.8rem;
-  font-weight: 600;
-  color: var(--primary-700);
-  background: rgba(31, 78, 140, 0.05);
-  margin-bottom: 2rem;
-  letter-spacing: 0.5px;
-  text-transform: uppercase;
-  border: 1px solid rgba(31, 78, 140, 0.15);
-  animation: badgeGlow 3s ease-in-out infinite;
-}
-
-@keyframes badgeGlow {
-
-  0%,
-  100% {
-    box-shadow: 0 0 0 0 rgba(31, 78, 140, 0);
-  }
-
-  50% {
-    box-shadow: 0 0 20px 2px rgba(31, 78, 140, 0.12);
-  }
-}
-
-body.dark-mode .hero-badge {
-  color: var(--secondary-400);
-  background: rgba(143, 189, 229, 0.08);
-  border-color: rgba(143, 189, 229, 0.15);
-}
-
-.hero-title {
-  font-size: clamp(3rem, 8vw, 5.5rem);
-  font-weight: 700;
-  margin-bottom: 1.5rem;
-  color: var(--primary-900);
-  line-height: 1.05;
+  gap: 1rem;
   font-family: 'Be Vietnam Pro', sans-serif;
-}
-
-body.dark-mode .hero-title {
-  color: #fff;
-}
-
-.hero-title .highlight {
-  background: linear-gradient(90deg,
-      #1f4e8c 0%,
-      #3a7bd5 25%,
-      #8fbde5 50%,
-      #3a7bd5 75%,
-      #1f4e8c 100%);
-  background-size: 200% auto;
-  -webkit-background-clip: text;
-  -webkit-text-fill-color: transparent;
-  background-clip: text;
-  display: block;
-  padding-bottom: 0.1em;
   font-style: italic;
-  animation: shimmer 3s linear infinite;
-}
-
-@keyframes shimmer {
-  0% {
-    background-position: 0% center;
-  }
-
-  100% {
-    background-position: 200% center;
-  }
-}
-
-.hero-subtitle {
-  font-size: clamp(1rem, 2vw, 1.15rem);
-  color: var(--text-secondary);
+  font-size: 0.92rem;
+  font-weight: 500;
+  color: #8B6E4A;
+  letter-spacing: 0.02em;
   margin-bottom: 2.5rem;
-  max-width: 600px;
-  line-height: 1.7;
-  font-weight: 400;
+}
+
+body.dark-mode .hero-greeting {
+  color: #C9A876;
+}
+
+.hero-greeting .dash-line {
+  width: 36px;
+  height: 1.5px;
+  background: currentColor;
+  opacity: 0.45;
+}
+
+/* Main title */
+.hero-title {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  margin-bottom: 0;
+  line-height: 1.0;
+  gap: 0.25rem;
+}
+
+.hero-title-pre {
   font-family: 'Be Vietnam Pro', sans-serif;
+  font-size: clamp(2.5rem, 6vw, 4.25rem);
+  font-weight: 700;
+  color: #1F2937;
+  letter-spacing: -0.025em;
+  margin: 0;
+  line-height: 1.05;
+}
+
+body.dark-mode .hero-title-pre {
+  color: #F3F4F6;
+}
+
+.hero-title-main {
+  position: relative;
+  font-family: 'Caveat', cursive;
+  font-size: clamp(5.5rem, 13vw, 10rem);
+  font-weight: 700;
+  color: #B07744;
+  line-height: 0.95;
+  letter-spacing: 0.01em;
+  display: inline-block;
+  text-shadow: 2px 3px 0 rgba(176, 119, 68, 0.1);
+  padding: 0 1.5rem 0.5rem;
+  margin-top: -0.5rem;
+}
+
+body.dark-mode .hero-title-main {
+  color: #E8B783;
+  text-shadow: 2px 3px 0 rgba(232, 183, 131, 0.12);
+}
+
+.hero-underline {
+  position: absolute;
+  bottom: -0.25rem;
+  left: 0;
+  width: 100%;
+  height: 22px;
+  color: #B07744;
+  opacity: 0.55;
+}
+
+body.dark-mode .hero-underline {
+  color: #E8B783;
+  opacity: 0.5;
+}
+
+/* Subtitle */
+.hero-subtitle {
+  font-family: 'Be Vietnam Pro', sans-serif;
+  font-style: italic;
+  font-size: clamp(1.1rem, 1.9vw, 1.35rem);
+  color: #6B5847;
+  margin: 2.5rem 0 1rem;
+  max-width: 600px;
+  line-height: 1.65;
+  font-weight: 400;
+  letter-spacing: 0.005em;
+}
+
+body.dark-mode .hero-subtitle {
+  color: #B8A78F;
+}
+
+.hero-heart {
+  color: #C77B3F;
+  margin-bottom: 1.5rem;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+
+body.dark-mode .hero-heart {
+  color: #E8B783;
 }
 
 .hero-actions {
   display: flex;
-  gap: 0.75rem;
+  gap: 0.85rem;
   justify-content: center;
+  margin-top: 0.5rem;
 }
 
-/* ─── Scroll Indicator ─────────────────────── */
+/* ⭐ Signature ở dưới buttons — "letter signed" vibe */
+.hero-signature {
+  margin-top: 2.5rem;
+  font-family: 'Be Vietnam Pro', sans-serif;
+  font-style: italic;
+  font-size: 0.85rem;
+  color: #A0876A;
+  letter-spacing: 0.05em;
+  opacity: 0.8;
+}
+
+body.dark-mode .hero-signature {
+  color: #8B7355;
+}
+
+/* Scroll indicator */
 .scroll-indicator {
   position: absolute;
   bottom: 1.5rem;
   left: 50%;
   transform: translateX(-50%);
   color: var(--text-muted);
-  z-index: 2;
+  z-index: 5;
 }
 
-/* ─── Particles ────────────────────────────── */
+/* Hide unused old elements */
 .particles-container {
-  position: absolute;
-  inset: 0;
-  overflow: hidden;
-  z-index: 0;
-  pointer-events: none;
+  display: none;
 }
 
 .particle {
-  position: absolute;
-  border-radius: 50%;
-  background: var(--primary-600);
+  display: none;
 }
 
-body.dark-mode .particle {
-  background: var(--secondary-500);
-}
-
-/* ─── Background Blobs ─────────────────────── */
 .blob {
-  position: absolute;
-  border-radius: 50%;
-  filter: blur(100px);
-  z-index: 0;
-  opacity: 0.2;
-  animation: float 15s infinite alternate ease-in-out;
-  pointer-events: none;
+  display: none;
 }
 
-@keyframes float {
-  0% {
-    transform: translate(0, 0) scale(1);
-  }
-
-  50% {
-    transform: translate(20px, -30px) scale(1.05);
-  }
-
-  100% {
-    transform: translate(-10px, 15px) scale(0.95);
-  }
+.hero-badge {
+  display: none;
 }
 
-.blob-1 {
-  top: 5%;
-  left: -10%;
-  width: 45vw;
-  height: 45vw;
-  max-width: 500px;
-  max-height: 500px;
-  background: var(--secondary-400);
-}
-
-.blob-2 {
-  bottom: 0;
-  right: -10%;
-  width: 35vw;
-  height: 35vw;
-  max-width: 400px;
-  max-height: 400px;
-  background: var(--primary-600);
-  opacity: 0.12;
-  animation-delay: -7s;
-}
-
-.blob-3 {
-  top: 50%;
-  left: 60%;
-  width: 20vw;
-  height: 20vw;
-  max-width: 250px;
-  max-height: 250px;
-  background: var(--secondary-600);
-  opacity: 0.08;
-  animation-delay: -3s;
-}
-
-/* ─── STATS ────────────────────────────────── */
+/* ═══════════════════════════════════════════════
+   STATS
+   ═══════════════════════════════════════════════ */
 .stats-section {
   position: relative;
   z-index: 10;
@@ -320,7 +413,9 @@ body.dark-mode .stat-value {
   font-family: 'Be Vietnam Pro', sans-serif;
 }
 
-/* ─── SECTION HEADER ──────────────────────── */
+/* ═══════════════════════════════════════════════
+   SECTION HEADER
+   ═══════════════════════════════════════════════ */
 .section-label {
   display: inline-block;
   padding: 0.3rem 1rem;
@@ -364,7 +459,9 @@ body.dark-mode .section-title {
   text-align: center;
 }
 
-/* ─── BENTO GRID ──────────────────────────── */
+/* ═══════════════════════════════════════════════
+   BENTO — ⭐ background-size: cover để ảnh thật phủ kín
+   ═══════════════════════════════════════════════ */
 .bento-section .page-header {
   margin-bottom: 3rem;
 }
@@ -406,26 +503,30 @@ body.dark-mode .section-title {
   position: absolute;
   inset: 0;
   background-size: cover;
+  /* ⭐ ảnh phủ kín */
   background-position: center;
-  opacity: 0.65;
+  /* ⭐ căn giữa */
+  background-repeat: no-repeat;
+  opacity: 0.85;
   transition: all 0.7s ease;
 }
 
 .bento-card:hover .bento-bg {
-  opacity: 0.45;
+  opacity: 0.65;
   transform: scale(1.05);
 }
 
+/* Fallback gradient nếu ảnh chưa load */
 .bento-bg--members {
-  background: linear-gradient(135deg, var(--primary-800), var(--primary-900));
+  background-color: var(--primary-800);
 }
 
 .bento-bg--gallery {
-  background: linear-gradient(135deg, #7c3aed, #a855f7);
+  background-color: #7c3aed;
 }
 
 .bento-bg--messages {
-  background: linear-gradient(135deg, var(--secondary-600), var(--primary-700));
+  background-color: var(--secondary-600);
 }
 
 .bento-overlay {
@@ -564,7 +665,9 @@ body.dark-mode .section-title {
   transform: translateX(0);
 }
 
-/* ─── TIMELINE ─────────────────────────────── */
+/* ═══════════════════════════════════════════════
+   TIMELINE
+   ═══════════════════════════════════════════════ */
 .timeline-section .page-header {
   margin-bottom: 4rem;
 }
@@ -654,7 +757,9 @@ body.dark-mode .section-title {
   font-family: 'Be Vietnam Pro', sans-serif;
 }
 
-/* ─── QUOTE Section ───────────────────────── */
+/* ═══════════════════════════════════════════════
+   QUOTE
+   ═══════════════════════════════════════════════ */
 .quote-section {
   position: relative;
   padding: 6rem 0;
@@ -703,14 +808,13 @@ body.dark-mode .quote-section {
 }
 
 .quote-text {
-  font-family: 'Be Vietnam Pro', sans-serif;
-  font-size: clamp(2rem, 5vw, 3.5rem);
+  font-family: 'Caveat', cursive;
+  font-size: clamp(2.5rem, 6vw, 4.5rem);
   font-weight: 600;
   color: #fff;
   max-width: 700px;
   margin: 0 auto;
-  line-height: 1.3;
-  font-style: italic;
+  line-height: 1.15;
 }
 
 .quote-desc {
@@ -743,7 +847,9 @@ body.dark-mode .quote-section {
   color: #fff;
 }
 
-/* ─── Responsive ───────────────────────────── */
+/* ═══════════════════════════════════════════════
+   RESPONSIVE
+   ═══════════════════════════════════════════════ */
 @media (max-width: 900px) {
   .bento-grid {
     grid-template-columns: 1fr;
@@ -763,6 +869,21 @@ body.dark-mode .quote-section {
   .stats-grid {
     grid-template-columns: repeat(2, 1fr);
     gap: 0.75rem;
+  }
+
+  .hero-greeting {
+    font-size: 0.82rem;
+    gap: 0.6rem;
+  }
+
+  .hero-greeting .dash-line {
+    width: 20px;
+  }
+
+  /* Ẩn bớt sparkle ở mobile cho đỡ rối */
+  .hero-sparkle-ml,
+  .hero-sparkle-mr {
+    display: none;
   }
 
   .timeline-line {
@@ -802,8 +923,33 @@ body.dark-mode .quote-section {
     font-size: 1.75rem;
   }
 
-  .hero-title {
+  .hero-title-pre {
     font-size: 2.25rem;
+  }
+
+  .hero-title-main {
+    font-size: 5rem;
+  }
+
+  .hero-greeting {
+    flex-wrap: wrap;
+    text-align: center;
+  }
+
+  .hero-signature {
+    font-size: 0.75rem;
+    margin-top: 2rem;
+  }
+
+  /* Mobile sparkle vị trí thu gọn */
+  .hero-sparkle-tl,
+  .hero-sparkle-tr {
+    top: 6%;
+  }
+
+  .hero-sparkle-bl,
+  .hero-sparkle-br {
+    bottom: 10%;
   }
 
   .bento-card-content {
@@ -818,30 +964,4 @@ body.dark-mode .quote-section {
     width: 44px;
     height: 44px;
   }
-}
-
-.bento-bg--members {
-  background: linear-gradient(135deg, var(--primary-800), var(--primary-900));
-  background-size: cover;
-  background-position: center;
-}
-
-.bento-bg--gallery {
-  background: linear-gradient(135deg, #7c3aed, #a855f7);
-  background-size: cover;
-  background-position: center;
-}
-
-.bento-bg--messages {
-  background: linear-gradient(135deg, var(--secondary-600), var(--primary-700));
-  background-size: cover;
-  background-position: center;
-}
-
-.bento-overlay {
-  background: linear-gradient(to top,
-      rgba(10, 37, 64, 0.85) 0%,
-      /* tăng/giảm số 0.85 này */
-      rgba(10, 37, 64, 0.3) 50%,
-      transparent 100%);
 }
