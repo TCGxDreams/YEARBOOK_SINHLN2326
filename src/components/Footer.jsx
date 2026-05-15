@@ -13,7 +13,7 @@ const Footer = () => {
         <div className="footer-grid">
           <div className="footer-brand">
             <h3>SINHLN2326</h3>
-            <p>Lớp 12 Chuyên Sinh — Phổ thông Năng khiếu</p>
+            <p>Lớp 12 SinhLN — Phổ thông Năng khiếu</p>
             <p className="footer-quote">"Mãi là thanh xuân tươi đẹp nhất"</p>
           </div>
 
@@ -28,7 +28,7 @@ const Footer = () => {
           <div className="footer-contact">
             <h4>Liên Hệ</h4>
             <a href="mailto:sinhln2326@ptnk.edu.vn" className="footer-contact-link">
-              <Mail size={16} /> sinhln2326@ptnk.edu.vn
+              <Mail size={16} /> tcgxbill@gmail.com
             </a>
             <a href="https://ptnk.edu.vn" target="_blank" rel="noopener noreferrer" className="footer-contact-link">
               <ExternalLink size={16} /> ptnk.edu.vn
@@ -38,7 +38,7 @@ const Footer = () => {
 
         <div className="footer-bottom">
           <p>
-            Made with <Heart size={14} className="heart-icon" /> by Ptnkers SINHLN2326 — Khóa 2023–2026
+            Made with <Heart size={14} className="heart-icon" /> by Ptnkers SINHLN2326 aka DrXeno — Khóa 2023–2026
           </p>
         </div>
       </div>
