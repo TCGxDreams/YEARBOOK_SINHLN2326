@@ -1,4 +1,3 @@
-/* Import font handwritten Caveat */
 @import url('https://fonts.googleapis.com/css2?family=Caveat:wght@400;500;600;700&display=swap');
 
 .home-page {
@@ -8,7 +7,7 @@
 }
 
 /* ═══════════════════════════════════════════════
-   HERO — yearbook editorial + sparkle decorations
+   HERO — Biolộdề collage (light) / deep navy (dark)
    ═══════════════════════════════════════════════ */
 .hero {
   min-height: 100vh;
@@ -20,10 +19,8 @@
   flex-direction: column;
   align-items: center;
   justify-content: center;
-  background:
-    radial-gradient(ellipse 80% 60% at 50% 0%, rgba(252, 224, 192, 0.5) 0%, transparent 60%),
-    radial-gradient(ellipse 70% 50% at 50% 100%, rgba(207, 226, 243, 0.4) 0%, transparent 60%),
-    linear-gradient(180deg, #FFF8EE 0%, #FFFAF3 50%, #FAFCFE 100%);
+  background: #FFF3DE;
+  /* fallback cream nếu ảnh chưa load */
 }
 
 body.dark-mode .hero {
@@ -33,78 +30,56 @@ body.dark-mode .hero {
     linear-gradient(180deg, #1a1410 0%, #121820 60%, #0b0f14 100%);
 }
 
-/* Paper-like grain texture */
-.hero::before {
-  content: '';
+/* ⭐ Collage background — light mode only */
+.hero-collage-bg {
   position: absolute;
   inset: 0;
-  background-image:
-    radial-gradient(circle at 20% 30%, rgba(168, 134, 92, 0.07) 1px, transparent 1.5px),
-    radial-gradient(circle at 70% 60%, rgba(168, 134, 92, 0.06) 1px, transparent 1.5px),
-    radial-gradient(circle at 45% 85%, rgba(168, 134, 92, 0.06) 1px, transparent 1.5px);
-  background-size: 80px 80px, 60px 60px, 100px 100px;
-  background-position: 0 0, 30px 30px, 60px 0;
-  pointer-events: none;
-  z-index: 1;
-  opacity: 0.7;
-}
-
-body.dark-mode .hero::before {
-  opacity: 0.4;
-}
-
-.hero::after {
-  display: none;
-}
-
-/* Warm decorative blobs */
-.hero-warm-blob {
-  position: absolute;
-  border-radius: 50%;
-  filter: blur(90px);
-  opacity: 0.45;
-  pointer-events: none;
+  background-size: cover;
+  background-position: center;
+  background-repeat: no-repeat;
   z-index: 0;
 }
 
-.hero-warm-blob-1 {
-  top: 8%;
-  left: -8%;
-  width: 380px;
-  height: 380px;
-  background: #FBD7B0;
+body.dark-mode .hero-collage-bg {
+  display: none;
 }
 
-.hero-warm-blob-2 {
-  bottom: 10%;
-  right: -8%;
-  width: 320px;
-  height: 320px;
-  background: #C8DCEC;
-  opacity: 0.5;
+/* ⭐ Radial cream overlay — center opaque (hide "Biolộdề" giữa), edges transparent (collage peek through) */
+.hero::after {
+  content: '';
+  position: absolute;
+  inset: 0;
+  background: radial-gradient(ellipse 65% 55% at center,
+      rgba(255, 243, 220, 0.94) 0%,
+      rgba(255, 243, 220, 0.78) 45%,
+      rgba(255, 243, 220, 0.45) 75%,
+      rgba(255, 243, 220, 0.25) 100%);
+  z-index: 1;
+  pointer-events: none;
 }
 
-body.dark-mode .hero-warm-blob-1 {
-  background: rgba(180, 110, 60, 0.25);
+body.dark-mode .hero::after {
+  display: none;
 }
 
-body.dark-mode .hero-warm-blob-2 {
-  background: rgba(60, 100, 150, 0.25);
+.hero::before {
+  display: none;
 }
 
-/* ⭐ Sparkle decorations rải 4 góc + 2 ngang giữa */
+/* Sparkles — DARK MODE ONLY (light mode đã có collage làm decoration) */
 .hero-sparkle {
   position: absolute;
-  color: #C9A876;
+  color: #D4A574;
   z-index: 2;
   pointer-events: none;
-  filter: drop-shadow(0 1px 2px rgba(176, 119, 68, 0.15));
+  filter: drop-shadow(0 0 8px rgba(212, 165, 116, 0.4));
   animation: sparkle-twinkle 3s ease-in-out infinite;
+  display: none;
+  /* hidden by default → only show in dark */
 }
 
 body.dark-mode .hero-sparkle {
-  color: #D4A574;
-  opacity: 0.6;
+  display: block;
 }
 
 .hero-sparkle-tl {
@@ -188,24 +163,25 @@ body.dark-mode .hero-sparkle {
   font-family: 'Be Vietnam Pro', sans-serif;
   font-style: italic;
   font-size: 0.92rem;
-  font-weight: 500;
-  color: #8B6E4A;
+  font-weight: 600;
+  color: #3D2A18;
+  /* deeper - contrast vs cream overlay */
   letter-spacing: 0.02em;
   margin-bottom: 2.5rem;
 }
 
 body.dark-mode .hero-greeting {
   color: #C9A876;
+  font-weight: 500;
 }
 
 .hero-greeting .dash-line {
   width: 36px;
   height: 1.5px;
   background: currentColor;
-  opacity: 0.45;
+  opacity: 0.55;
 }
 
-/* Main title */
 .hero-title {
   display: flex;
   flex-direction: column;
@@ -215,11 +191,12 @@ body.dark-mode .hero-greeting {
   gap: 0.25rem;
 }
 
+/* Ptnkers — deep ink black, đậm chắc */
 .hero-title-pre {
   font-family: 'Be Vietnam Pro', sans-serif;
   font-size: clamp(2.5rem, 6vw, 4.25rem);
-  font-weight: 700;
-  color: #1F2937;
+  font-weight: 800;
+  color: #0A1628;
   letter-spacing: -0.025em;
   margin: 0;
   line-height: 1.05;
@@ -227,18 +204,21 @@ body.dark-mode .hero-greeting {
 
 body.dark-mode .hero-title-pre {
   color: #F3F4F6;
+  font-weight: 700;
 }
 
+/* SINHLN2326 — rich saddle brown */
 .hero-title-main {
   position: relative;
   font-family: 'Caveat', cursive;
   font-size: clamp(5.5rem, 13vw, 10rem);
   font-weight: 700;
-  color: #B07744;
+  color: #6B3410;
+  /* deep saddle brown */
   line-height: 0.95;
   letter-spacing: 0.01em;
   display: inline-block;
-  text-shadow: 2px 3px 0 rgba(176, 119, 68, 0.1);
+  text-shadow: 2px 4px 0 rgba(107, 52, 16, 0.15);
   padding: 0 1.5rem 0.5rem;
   margin-top: -0.5rem;
 }
@@ -254,8 +234,8 @@ body.dark-mode .hero-title-main {
   left: 0;
   width: 100%;
   height: 22px;
-  color: #B07744;
-  opacity: 0.55;
+  color: #6B3410;
+  opacity: 0.7;
 }
 
 body.dark-mode .hero-underline {
@@ -268,20 +248,21 @@ body.dark-mode .hero-underline {
   font-family: 'Be Vietnam Pro', sans-serif;
   font-style: italic;
   font-size: clamp(1.1rem, 1.9vw, 1.35rem);
-  color: #6B5847;
+  color: #3D2A18;
   margin: 2.5rem 0 1rem;
   max-width: 600px;
   line-height: 1.65;
-  font-weight: 400;
+  font-weight: 500;
   letter-spacing: 0.005em;
 }
 
 body.dark-mode .hero-subtitle {
   color: #B8A78F;
+  font-weight: 400;
 }
 
 .hero-heart {
-  color: #C77B3F;
+  color: #9C4A1A;
   margin-bottom: 1.5rem;
   display: flex;
   align-items: center;
@@ -299,22 +280,23 @@ body.dark-mode .hero-heart {
   margin-top: 0.5rem;
 }
 
-/* ⭐ Signature ở dưới buttons — "letter signed" vibe */
 .hero-signature {
   margin-top: 2.5rem;
   font-family: 'Be Vietnam Pro', sans-serif;
   font-style: italic;
   font-size: 0.85rem;
-  color: #A0876A;
+  color: #5D4326;
   letter-spacing: 0.05em;
-  opacity: 0.8;
+  opacity: 0.95;
+  font-weight: 500;
 }
 
 body.dark-mode .hero-signature {
   color: #8B7355;
+  font-weight: 400;
+  opacity: 0.8;
 }
 
-/* Scroll indicator */
 .scroll-indicator {
   position: absolute;
   bottom: 1.5rem;
@@ -324,19 +306,11 @@ body.dark-mode .hero-signature {
   z-index: 5;
 }
 
-/* Hide unused old elements */
-.particles-container {
-  display: none;
-}
-
-.particle {
-  display: none;
-}
-
-.blob {
-  display: none;
-}
-
+/* Hide unused elements */
+.hero-warm-blob,
+.particles-container,
+.particle,
+.blob,
 .hero-badge {
   display: none;
 }
@@ -460,7 +434,7 @@ body.dark-mode .section-title {
 }
 
 /* ═══════════════════════════════════════════════
-   BENTO — ⭐ background-size: cover để ảnh thật phủ kín
+   BENTO
    ═══════════════════════════════════════════════ */
 .bento-section .page-header {
   margin-bottom: 3rem;
@@ -503,9 +477,7 @@ body.dark-mode .section-title {
   position: absolute;
   inset: 0;
   background-size: cover;
-  /* ⭐ ảnh phủ kín */
   background-position: center;
-  /* ⭐ căn giữa */
   background-repeat: no-repeat;
   opacity: 0.85;
   transition: all 0.7s ease;
@@ -516,7 +488,6 @@ body.dark-mode .section-title {
   transform: scale(1.05);
 }
 
-/* Fallback gradient nếu ảnh chưa load */
 .bento-bg--members {
   background-color: var(--primary-800);
 }
@@ -652,10 +623,9 @@ body.dark-mode .section-title {
   border-radius: 50%;
   padding: 0.75rem;
   color: #fff;
-  display: block;
+  display: flex;
   width: 48px;
   height: 48px;
-  display: flex;
   align-items: center;
   justify-content: center;
 }
@@ -880,10 +850,17 @@ body.dark-mode .quote-section {
     width: 20px;
   }
 
-  /* Ẩn bớt sparkle ở mobile cho đỡ rối */
-  .hero-sparkle-ml,
-  .hero-sparkle-mr {
+  body.dark-mode .hero-sparkle-ml,
+  body.dark-mode .hero-sparkle-mr {
     display: none;
+  }
+
+  /* Mobile: tighten radial overlay center hơn để chữ rõ */
+  .hero::after {
+    background: radial-gradient(ellipse 85% 65% at center,
+        rgba(255, 243, 220, 0.96) 0%,
+        rgba(255, 243, 220, 0.82) 50%,
+        rgba(255, 243, 220, 0.5) 100%);
   }
 
   .timeline-line {
@@ -939,17 +916,6 @@ body.dark-mode .quote-section {
   .hero-signature {
     font-size: 0.75rem;
     margin-top: 2rem;
-  }
-
-  /* Mobile sparkle vị trí thu gọn */
-  .hero-sparkle-tl,
-  .hero-sparkle-tr {
-    top: 6%;
-  }
-
-  .hero-sparkle-bl,
-  .hero-sparkle-br {
-    bottom: 10%;
   }
 
   .bento-card-content {
