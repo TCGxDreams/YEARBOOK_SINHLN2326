@@ -1,11 +1,12 @@
 import { useState, useEffect, useRef } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
-import { X, ZoomIn, Upload, Image as ImageIcon, Loader2, Heart, Trash2, Plus, Play, Film } from 'lucide-react';
+import { X, ZoomIn, Upload, Image as ImageIcon, Heart, Trash2, Plus, Play, Film, Loader2 } from 'lucide-react';
 import { supabase } from '../lib/supabase';
 import { useAuth } from '../contexts/AuthContext';
+import { useToast } from '../contexts/ToastContext';                    // ⭐ NEW
 import { uploadVideoToDrive } from '../lib/uploadVideo';
-// ⭐ Helper mới: upload ảnh có fallback Drive
 import { uploadPhoto, getPhotoSrc } from '../lib/uploadPhoto';
+import { GallerySkeleton } from '../components/Skeleton';                // ⭐ NEW
 import './Pages.css';
 
 const CATEGORIES = [
@@ -17,18 +18,17 @@ const CATEGORIES = [
   { key: 'other', label: 'Khác' },
 ];
 
-// Giới hạn file
-const MAX_IMAGE_SIZE = 50 * 1024 * 1024;   // 50MB (Drive support được, Supabase fallback)
-const MAX_VIDEO_SIZE = 200 * 1024 * 1024;  // 200MB
+const MAX_IMAGE_SIZE = 50 * 1024 * 1024;
+const MAX_VIDEO_SIZE = 200 * 1024 * 1024;
 const IMAGE_TYPES = ['image/jpeg', 'image/png', 'image/webp', 'image/gif'];
 const VIDEO_TYPES = ['video/mp4', 'video/quicktime', 'video/webm'];
 
-// Helper: URL preview cho video Drive
 const driveThumbnail = (id) => `https://drive.google.com/thumbnail?id=${id}&sz=w600`;
 const drivePreview = (id) => `https://drive.google.com/file/d/${id}/preview`;
 
 const Gallery = () => {
   const { member, isAdmin } = useAuth();
+  const toast = useToast();                                              // ⭐ NEW
   const [items, setItems] = useState([]);
   const [loading, setLoading] = useState(true);
   const [lightbox, setLightbox] = useState(null);
@@ -36,7 +36,7 @@ const Gallery = () => {
   const [showUpload, setShowUpload] = useState(false);
   const [uploading, setUploading] = useState(false);
   const [uploadProgress, setUploadProgress] = useState(0);
-  const [uploadStatus, setUploadStatus] = useState('');   // ⭐ message cho fallback
+  const [uploadStatus, setUploadStatus] = useState('');
   const [uploadData, setUploadData] = useState({ caption: '', category: 'other' });
   const [dragOver, setDragOver] = useState(false);
   const [selectedFile, setSelectedFile] = useState(null);
@@ -44,7 +44,59 @@ const Gallery = () => {
   const [fileKind, setFileKind] = useState(null);
   const fileRef = useRef(null);
 
-  useEffect(() => { fetchItems(); }, []);
+  // ════════════════════════════════════════════════════════════
+  // Fetch + Realtime subscription
+  // ════════════════════════════════════════════════════════════
+  useEffect(() => {
+    fetchItems();
+
+    // ─── Realtime: gallery (ảnh) ───
+    const galleryChannel = supabase
+      .channel('gallery-realtime')
+      .on('postgres_changes',
+        { event: '*', schema: 'public', table: 'gallery' },
+        (payload) => handleRealtimeChange(payload, 'image')
+      )
+      .subscribe();
+
+    // ─── Realtime: videos ───
+    const videosChannel = supabase
+      .channel('videos-realtime')
+      .on('postgres_changes',
+        { event: '*', schema: 'public', table: 'videos' },
+        (payload) => handleRealtimeChange(payload, 'video')
+      )
+      .subscribe();
+
+    return () => {
+      supabase.removeChannel(galleryChannel);
+      supabase.removeChannel(videosChannel);
+    };
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [member?.mshs]);
+
+  function handleRealtimeChange(payload, type) {
+    const { eventType, new: newRow, old: oldRow } = payload;
+
+    if (eventType === 'INSERT') {
+      // Dedup: nếu đã có trong state (do current user vừa upload) thì skip
+      setItems(prev => {
+        if (prev.some(it => it.id === newRow.id && it.type === type)) return prev;
+        return [{ ...newRow, type }, ...prev];
+      });
+      // Toast notify nếu KHÔNG phải mình upload
+      if (newRow.uploaded_by !== member?.mshs) {
+        const who = newRow.uploaded_by_name || 'Ai đó';
+        toast.info(`${who} vừa thêm ${type === 'video' ? 'video' : 'ảnh'} mới!`);
+      }
+    } else if (eventType === 'DELETE') {
+      setItems(prev => prev.filter(it => !(it.id === oldRow.id && it.type === type)));
+    } else if (eventType === 'UPDATE') {
+      setItems(prev => prev.map(it =>
+        it.id === newRow.id && it.type === type ? { ...newRow, type } : it
+      ));
+    }
+  }
 
   async function fetchItems() {
     setLoading(true);
@@ -63,6 +115,7 @@ const Gallery = () => {
       setItems(merged);
     } catch (e) {
       console.warn('Gallery fetch error:', e);
+      toast.error('Không tải được kỷ niệm. Thử lại sau nhé.');
     }
     setLoading(false);
   }
@@ -71,13 +124,13 @@ const Gallery = () => {
     if (!file) return;
 
     if (IMAGE_TYPES.includes(file.type)) {
-      if (file.size > MAX_IMAGE_SIZE) { alert('Ảnh tối đa 50MB!'); return; }
+      if (file.size > MAX_IMAGE_SIZE) { toast.error('Ảnh tối đa 50MB!'); return; }
       setFileKind('image');
     } else if (VIDEO_TYPES.includes(file.type)) {
-      if (file.size > MAX_VIDEO_SIZE) { alert('Video tối đa 200MB!'); return; }
+      if (file.size > MAX_VIDEO_SIZE) { toast.error('Video tối đa 200MB!'); return; }
       setFileKind('video');
     } else {
-      alert('Chỉ chấp nhận ảnh (JPEG/PNG/WebP/GIF) hoặc video (MP4/MOV/WebM)!');
+      toast.error('Chỉ chấp nhận ảnh (JPEG/PNG/WebP/GIF) hoặc video (MP4/MOV/WebM)!');
       return;
     }
 
@@ -94,7 +147,6 @@ const Gallery = () => {
 
     try {
       if (fileKind === 'video') {
-        // ─── VIDEO → Drive luôn ───
         setUploadStatus('Đang tải video lên Drive...');
         const driveFileId = await uploadVideoToDrive(selectedFile, setUploadProgress);
 
@@ -113,12 +165,11 @@ const Gallery = () => {
 
         if (error) throw error;
         setItems(prev => [{ ...data, type: 'video' }, ...prev]);
+        toast.success('Đã tải video lên!');
       } else {
-        // ─── ẢNH → try Supabase, fallback Drive ───
         setUploadStatus('Đang tải ảnh lên...');
         const result = await uploadPhoto(selectedFile, member.mshs, (progress) => {
           setUploadProgress(progress);
-          // Detect khi switch sang Drive (progress chỉ > 0 khi đang upload Drive)
           if (progress > 0 && progress < 100) {
             setUploadStatus('Supabase đầy, đang chuyển sang Drive...');
           }
@@ -140,9 +191,10 @@ const Gallery = () => {
         if (dbError) throw dbError;
         setItems(prev => [{ ...data, type: 'image' }, ...prev]);
 
-        // Hint cho user nếu fallback xảy ra
         if (result.source === 'drive') {
-          console.info('[Gallery] Ảnh đã lưu trên Google Drive (Supabase đã đầy)');
+          toast.success('Đã tải ảnh lên (qua Google Drive)!');
+        } else {
+          toast.success('Đã tải ảnh lên!');
         }
       }
 
@@ -154,7 +206,7 @@ const Gallery = () => {
       setUploadData({ caption: '', category: 'other' });
     } catch (err) {
       console.error('Upload error:', err);
-      alert('Lỗi upload: ' + (err.message || 'Vui lòng thử lại'));
+      toast.error('Lỗi upload: ' + (err.message || 'Vui lòng thử lại'));
     }
     setUploading(false);
     setUploadProgress(0);
@@ -180,7 +232,11 @@ const Gallery = () => {
       await supabase.from(table).delete().eq('id', item.id);
       setItems(prev => prev.filter(it => !(it.id === item.id && it.type === item.type)));
       setLightbox(null);
-    } catch (e) { console.error(e); }
+      toast.success(`Đã xóa ${item.type === 'video' ? 'video' : 'ảnh'}.`);
+    } catch (e) {
+      console.error(e);
+      toast.error('Không xóa được. Thử lại sau.');
+    }
   }
 
   const filtered = filter === 'all' ? items : items.filter(it => it.category === filter);
@@ -233,7 +289,6 @@ const Gallery = () => {
               <h2 className="form-title">Thêm Ảnh / Video Kỷ Niệm</h2>
 
               <form onSubmit={handleUpload} className="write-form">
-                {/* Drop zone / preview */}
                 {previewUrl ? (
                   <div className="upload-preview-container">
                     {fileKind === 'video' ? (
@@ -280,7 +335,6 @@ const Gallery = () => {
                   </select>
                 </div>
 
-                {/* Progress bar khi upload Drive (video hoặc ảnh fallback) */}
                 {uploading && uploadProgress > 0 && uploadProgress < 100 && (
                   <div className="upload-progress-wrap">
                     <div className="upload-progress-bar" style={{ width: `${uploadProgress}%` }} />
@@ -288,7 +342,6 @@ const Gallery = () => {
                   </div>
                 )}
 
-                {/* Status text (hiển thị khi đang tải) */}
                 {uploading && uploadStatus && (
                   <p style={{ fontSize: '0.82rem', color: 'var(--text-muted)', textAlign: 'center', margin: '0.25rem 0' }}>
                     {uploadStatus}
@@ -306,11 +359,9 @@ const Gallery = () => {
         )}
       </AnimatePresence>
 
-      {/* Grid */}
+      {/* Grid: skeleton khi loading, else items */}
       {loading ? (
-        <div className="flex-center" style={{ padding: '4rem' }}>
-          <Loader2 size={32} className="spin-icon" style={{ color: 'var(--ptnk-blue)' }} />
-        </div>
+        <GallerySkeleton count={9} />
       ) : filtered.length === 0 ? (
         <div className="empty-state text-center">
           <ImageIcon size={48} style={{ display: 'block', margin: '0 auto 1rem', opacity: 0.5 }} />
@@ -334,7 +385,6 @@ const Gallery = () => {
                   </div>
                 </>
               ) : (
-                /* ⭐ Ảnh: dùng getPhotoSrc → tự chọn Supabase hay Drive */
                 <img
                   src={getPhotoSrc(item, 800)}
                   alt={item.caption}
@@ -382,7 +432,6 @@ const Gallery = () => {
                   allowFullScreen
                 />
               ) : (
-                /* ⭐ Ảnh lightbox: getPhotoSrc với size lớn hơn */
                 <img src={getPhotoSrc(lightbox, 1920)} alt={lightbox.caption} />
               )}
 
