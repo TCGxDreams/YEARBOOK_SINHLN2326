@@ -1,12 +1,15 @@
-import { useState, useEffect, useRef } from 'react';
+import { useState, useEffect, useRef, useCallback } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
-import { X, ZoomIn, Upload, Image as ImageIcon, Heart, Trash2, Plus, Play, Film, Loader2 } from 'lucide-react';
+import {
+  X, ZoomIn, Upload, Image as ImageIcon, Heart, Trash2, Plus, Play, Film, Loader2,
+  ChevronLeft, ChevronRight,                       // ⭐ lightbox nav
+} from 'lucide-react';
 import { supabase } from '../lib/supabase';
 import { useAuth } from '../contexts/AuthContext';
-import { useToast } from '../contexts/ToastContext';                    // ⭐ NEW
+import { useToast } from '../contexts/ToastContext';
 import { uploadVideoToDrive } from '../lib/uploadVideo';
 import { uploadPhoto, getPhotoSrc } from '../lib/uploadPhoto';
-import { GallerySkeleton } from '../components/Skeleton';                // ⭐ NEW
+import { GallerySkeleton } from '../components/Skeleton';
 import './Pages.css';
 
 const CATEGORIES = [
@@ -23,12 +26,15 @@ const MAX_VIDEO_SIZE = 200 * 1024 * 1024;
 const IMAGE_TYPES = ['image/jpeg', 'image/png', 'image/webp', 'image/gif'];
 const VIDEO_TYPES = ['video/mp4', 'video/quicktime', 'video/webm'];
 
+// Swipe threshold (px)
+const SWIPE_THRESHOLD = 60;
+
 const driveThumbnail = (id) => `https://drive.google.com/thumbnail?id=${id}&sz=w600`;
 const drivePreview = (id) => `https://drive.google.com/file/d/${id}/preview`;
 
 const Gallery = () => {
   const { member, isAdmin } = useAuth();
-  const toast = useToast();                                              // ⭐ NEW
+  const toast = useToast();
   const [items, setItems] = useState([]);
   const [loading, setLoading] = useState(true);
   const [lightbox, setLightbox] = useState(null);
@@ -43,14 +49,16 @@ const Gallery = () => {
   const [previewUrl, setPreviewUrl] = useState(null);
   const [fileKind, setFileKind] = useState(null);
   const fileRef = useRef(null);
+  const touchStartX = useRef(null);                  // ⭐ swipe state
+
+  const filtered = filter === 'all' ? items : items.filter(it => it.category === filter);
 
   // ════════════════════════════════════════════════════════════
-  // Fetch + Realtime subscription
+  // Fetch + Realtime
   // ════════════════════════════════════════════════════════════
   useEffect(() => {
     fetchItems();
 
-    // ─── Realtime: gallery (ảnh) ───
     const galleryChannel = supabase
       .channel('gallery-realtime')
       .on('postgres_changes',
@@ -59,7 +67,6 @@ const Gallery = () => {
       )
       .subscribe();
 
-    // ─── Realtime: videos ───
     const videosChannel = supabase
       .channel('videos-realtime')
       .on('postgres_changes',
@@ -79,12 +86,10 @@ const Gallery = () => {
     const { eventType, new: newRow, old: oldRow } = payload;
 
     if (eventType === 'INSERT') {
-      // Dedup: nếu đã có trong state (do current user vừa upload) thì skip
       setItems(prev => {
         if (prev.some(it => it.id === newRow.id && it.type === type)) return prev;
         return [{ ...newRow, type }, ...prev];
       });
-      // Toast notify nếu KHÔNG phải mình upload
       if (newRow.uploaded_by !== member?.mshs) {
         const who = newRow.uploaded_by_name || 'Ai đó';
         toast.info(`${who} vừa thêm ${type === 'video' ? 'video' : 'ảnh'} mới!`);
@@ -120,6 +125,65 @@ const Gallery = () => {
     setLoading(false);
   }
 
+  // ════════════════════════════════════════════════════════════
+  // ⭐ Lightbox navigation: keyboard + swipe + prefetch
+  // ════════════════════════════════════════════════════════════
+  const lightboxIndex = lightbox
+    ? filtered.findIndex(it => it.id === lightbox.id && it.type === lightbox.type)
+    : -1;
+
+  const goToPrev = useCallback(() => {
+    if (lightboxIndex > 0) setLightbox(filtered[lightboxIndex - 1]);
+  }, [lightboxIndex, filtered]);
+
+  const goToNext = useCallback(() => {
+    if (lightboxIndex >= 0 && lightboxIndex < filtered.length - 1) {
+      setLightbox(filtered[lightboxIndex + 1]);
+    }
+  }, [lightboxIndex, filtered]);
+
+  // Keyboard: ←/→/Esc
+  useEffect(() => {
+    if (!lightbox) return;
+    const handleKey = (e) => {
+      if (e.key === 'Escape') setLightbox(null);
+      else if (e.key === 'ArrowLeft') goToPrev();
+      else if (e.key === 'ArrowRight') goToNext();
+    };
+    window.addEventListener('keydown', handleKey);
+    return () => window.removeEventListener('keydown', handleKey);
+  }, [lightbox, goToPrev, goToNext]);
+
+  // Prefetch ảnh kế bên cho mượt
+  useEffect(() => {
+    if (!lightbox) return;
+    const prefetch = (item) => {
+      if (!item || item.type !== 'image') return;
+      const img = new Image();
+      img.src = getPhotoSrc(item, 1920);
+    };
+    if (lightboxIndex > 0) prefetch(filtered[lightboxIndex - 1]);
+    if (lightboxIndex < filtered.length - 1) prefetch(filtered[lightboxIndex + 1]);
+  }, [lightbox, lightboxIndex, filtered]);
+
+  // Swipe handlers
+  const handleTouchStart = (e) => {
+    touchStartX.current = e.touches[0].clientX;
+  };
+
+  const handleTouchEnd = (e) => {
+    if (touchStartX.current === null) return;
+    const diff = touchStartX.current - e.changedTouches[0].clientX;
+    if (Math.abs(diff) > SWIPE_THRESHOLD) {
+      if (diff > 0) goToNext();   // swipe trái → next
+      else goToPrev();             // swipe phải → prev
+    }
+    touchStartX.current = null;
+  };
+
+  // ════════════════════════════════════════════════════════════
+  // Upload / Like / Delete
+  // ════════════════════════════════════════════════════════════
   function handleFileSelect(file) {
     if (!file) return;
 
@@ -190,15 +254,9 @@ const Gallery = () => {
           .single();
         if (dbError) throw dbError;
         setItems(prev => [{ ...data, type: 'image' }, ...prev]);
-
-        if (result.source === 'drive') {
-          toast.success('Đã tải ảnh lên (qua Google Drive)!');
-        } else {
-          toast.success('Đã tải ảnh lên!');
-        }
+        toast.success(result.source === 'drive' ? 'Đã tải ảnh lên (qua Google Drive)!' : 'Đã tải ảnh lên!');
       }
 
-      // Reset form
       setShowUpload(false);
       setSelectedFile(null);
       setPreviewUrl(null);
@@ -239,10 +297,11 @@ const Gallery = () => {
     }
   }
 
-  const filtered = filter === 'all' ? items : items.filter(it => it.category === filter);
-
   const containerVariants = { hidden: { opacity: 0 }, show: { opacity: 1, transition: { staggerChildren: 0.06 } } };
   const itemVariants = { hidden: { opacity: 0, scale: 0.9 }, show: { opacity: 1, scale: 1, transition: { duration: 0.4 } } };
+
+  const hasPrev = lightboxIndex > 0;
+  const hasNext = lightboxIndex >= 0 && lightboxIndex < filtered.length - 1;
 
   return (
     <div className="page-container container section">
@@ -278,7 +337,7 @@ const Gallery = () => {
         </div>
       </motion.div>
 
-      {/* Upload Modal */}
+      {/* Upload Modal — giữ nguyên */}
       <AnimatePresence>
         {showUpload && (
           <motion.div className="modal-overlay" initial={{ opacity: 0 }} animate={{ opacity: 1 }} exit={{ opacity: 0 }} onClick={() => !uploading && setShowUpload(false)}>
@@ -359,7 +418,7 @@ const Gallery = () => {
         )}
       </AnimatePresence>
 
-      {/* Grid: skeleton khi loading, else items */}
+      {/* Grid */}
       {loading ? (
         <GallerySkeleton count={9} />
       ) : filtered.length === 0 ? (
@@ -416,12 +475,59 @@ const Gallery = () => {
         </motion.div>
       )}
 
-      {/* Lightbox */}
+      {/* ⭐ Lightbox với keyboard + swipe + nav buttons + counter */}
       <AnimatePresence>
         {lightbox && (
-          <motion.div className="lightbox-overlay" initial={{ opacity: 0 }} animate={{ opacity: 1 }} exit={{ opacity: 0 }} onClick={() => setLightbox(null)}>
-            <motion.div className="lightbox-content" initial={{ scale: 0.8, opacity: 0 }} animate={{ scale: 1, opacity: 1 }} exit={{ scale: 0.8, opacity: 0 }} transition={{ type: 'spring', damping: 25, stiffness: 300 }} onClick={e => e.stopPropagation()}>
-              <button className="lightbox-close" onClick={() => setLightbox(null)}><X size={28} /></button>
+          <motion.div
+            className="lightbox-overlay"
+            initial={{ opacity: 0 }}
+            animate={{ opacity: 1 }}
+            exit={{ opacity: 0 }}
+            onClick={() => setLightbox(null)}
+            onTouchStart={handleTouchStart}
+            onTouchEnd={handleTouchEnd}
+          >
+            {/* Counter top-left */}
+            {filtered.length > 1 && (
+              <div className="lightbox-counter">
+                {lightboxIndex + 1} / {filtered.length}
+              </div>
+            )}
+
+            {/* Prev button */}
+            {hasPrev && (
+              <button
+                className="lightbox-nav lightbox-nav-prev"
+                onClick={e => { e.stopPropagation(); goToPrev(); }}
+                aria-label="Ảnh trước"
+              >
+                <ChevronLeft size={32} />
+              </button>
+            )}
+
+            {/* Next button */}
+            {hasNext && (
+              <button
+                className="lightbox-nav lightbox-nav-next"
+                onClick={e => { e.stopPropagation(); goToNext(); }}
+                aria-label="Ảnh kế"
+              >
+                <ChevronRight size={32} />
+              </button>
+            )}
+
+            <motion.div
+              key={`${lightbox.type}-${lightbox.id}`}
+              className="lightbox-content"
+              initial={{ scale: 0.85, opacity: 0 }}
+              animate={{ scale: 1, opacity: 1 }}
+              exit={{ scale: 0.85, opacity: 0 }}
+              transition={{ type: 'spring', damping: 25, stiffness: 300 }}
+              onClick={e => e.stopPropagation()}
+            >
+              <button className="lightbox-close" onClick={() => setLightbox(null)}>
+                <X size={28} />
+              </button>
 
               {lightbox.type === 'video' ? (
                 <iframe
@@ -439,6 +545,13 @@ const Gallery = () => {
                 {lightbox.caption && <div className="lightbox-caption">{lightbox.caption}</div>}
                 {lightbox.uploaded_by_name && <div className="lightbox-author">{lightbox.uploaded_by_name}</div>}
               </div>
+
+              {/* Hint phím tắt (chỉ desktop) */}
+              {filtered.length > 1 && (
+                <div className="lightbox-hint">
+                  ← → để chuyển · Esc để đóng
+                </div>
+              )}
             </motion.div>
           </motion.div>
         )}
