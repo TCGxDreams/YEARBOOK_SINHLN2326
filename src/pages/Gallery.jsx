@@ -4,6 +4,8 @@ import { X, ZoomIn, Upload, Image as ImageIcon, Loader2, Heart, Trash2, Plus, Pl
 import { supabase } from '../lib/supabase';
 import { useAuth } from '../contexts/AuthContext';
 import { uploadVideoToDrive } from '../lib/uploadVideo';
+// ⭐ Helper mới: upload ảnh có fallback Drive
+import { uploadPhoto, getPhotoSrc } from '../lib/uploadPhoto';
 import './Pages.css';
 
 const CATEGORIES = [
@@ -16,34 +18,34 @@ const CATEGORIES = [
 ];
 
 // Giới hạn file
-const MAX_IMAGE_SIZE = 5 * 1024 * 1024;    // 5MB
+const MAX_IMAGE_SIZE = 50 * 1024 * 1024;   // 50MB (Drive support được, Supabase fallback)
 const MAX_VIDEO_SIZE = 200 * 1024 * 1024;  // 200MB
 const IMAGE_TYPES = ['image/jpeg', 'image/png', 'image/webp', 'image/gif'];
 const VIDEO_TYPES = ['video/mp4', 'video/quicktime', 'video/webm'];
 
-// Helper: URL thumbnail + preview của Drive
+// Helper: URL preview cho video Drive
 const driveThumbnail = (id) => `https://drive.google.com/thumbnail?id=${id}&sz=w600`;
 const drivePreview = (id) => `https://drive.google.com/file/d/${id}/preview`;
 
 const Gallery = () => {
   const { member, isAdmin } = useAuth();
-  const [items, setItems] = useState([]);          // merge ảnh + video, mỗi item có .type
+  const [items, setItems] = useState([]);
   const [loading, setLoading] = useState(true);
   const [lightbox, setLightbox] = useState(null);
   const [filter, setFilter] = useState('all');
   const [showUpload, setShowUpload] = useState(false);
   const [uploading, setUploading] = useState(false);
   const [uploadProgress, setUploadProgress] = useState(0);
+  const [uploadStatus, setUploadStatus] = useState('');   // ⭐ message cho fallback
   const [uploadData, setUploadData] = useState({ caption: '', category: 'other' });
   const [dragOver, setDragOver] = useState(false);
   const [selectedFile, setSelectedFile] = useState(null);
   const [previewUrl, setPreviewUrl] = useState(null);
-  const [fileKind, setFileKind] = useState(null);  // 'image' | 'video'
+  const [fileKind, setFileKind] = useState(null);
   const fileRef = useRef(null);
 
   useEffect(() => { fetchItems(); }, []);
 
-  // ── Fetch cả ảnh (gallery) và video (videos), merge lại ──
   async function fetchItems() {
     setLoading(true);
     try {
@@ -55,7 +57,6 @@ const Gallery = () => {
       const images = (galleryRes.data || []).map(img => ({ ...img, type: 'image' }));
       const videos = (videosRes.data || []).map(vid => ({ ...vid, type: 'video' }));
 
-      // Trộn lại, sắp theo created_at giảm dần
       const merged = [...images, ...videos].sort(
         (a, b) => new Date(b.created_at) - new Date(a.created_at)
       );
@@ -66,12 +67,11 @@ const Gallery = () => {
     setLoading(false);
   }
 
-  // ── Chọn file: nhận diện ảnh hay video ──
   function handleFileSelect(file) {
     if (!file) return;
 
     if (IMAGE_TYPES.includes(file.type)) {
-      if (file.size > MAX_IMAGE_SIZE) { alert('Ảnh tối đa 5MB!'); return; }
+      if (file.size > MAX_IMAGE_SIZE) { alert('Ảnh tối đa 50MB!'); return; }
       setFileKind('image');
     } else if (VIDEO_TYPES.includes(file.type)) {
       if (file.size > MAX_VIDEO_SIZE) { alert('Video tối đa 200MB!'); return; }
@@ -85,16 +85,17 @@ const Gallery = () => {
     setPreviewUrl(URL.createObjectURL(file));
   }
 
-  // ── Upload: route theo loại file ──
   async function handleUpload(e) {
     e.preventDefault();
     if (!selectedFile || !member) return;
     setUploading(true);
     setUploadProgress(0);
+    setUploadStatus('');
 
     try {
       if (fileKind === 'video') {
-        // ─── VIDEO: upload lên Google Drive qua Edge Function ───
+        // ─── VIDEO → Drive luôn ───
+        setUploadStatus('Đang tải video lên Drive...');
         const driveFileId = await uploadVideoToDrive(selectedFile, setUploadProgress);
 
         const { data, error } = await supabase
@@ -113,22 +114,21 @@ const Gallery = () => {
         if (error) throw error;
         setItems(prev => [{ ...data, type: 'video' }, ...prev]);
       } else {
-        // ─── ẢNH: upload lên Supabase Storage (như cũ) ───
-        const ext = selectedFile.name.split('.').pop();
-        const filename = `${Date.now()}_${Math.random().toString(36).slice(2)}.${ext}`;
-        const path = `${member.mshs}/${filename}`;
-
-        const { error: storageError } = await supabase.storage
-          .from('gallery')
-          .upload(path, selectedFile, { contentType: selectedFile.type, cacheControl: '3600' });
-        if (storageError) throw storageError;
-
-        const { data: urlData } = supabase.storage.from('gallery').getPublicUrl(path);
+        // ─── ẢNH → try Supabase, fallback Drive ───
+        setUploadStatus('Đang tải ảnh lên...');
+        const result = await uploadPhoto(selectedFile, member.mshs, (progress) => {
+          setUploadProgress(progress);
+          // Detect khi switch sang Drive (progress chỉ > 0 khi đang upload Drive)
+          if (progress > 0 && progress < 100) {
+            setUploadStatus('Supabase đầy, đang chuyển sang Drive...');
+          }
+        });
 
         const { data, error: dbError } = await supabase
           .from('gallery')
           .insert({
-            image_url: urlData.publicUrl,
+            image_url: result.image_url || null,
+            drive_file_id: result.drive_file_id || null,
             caption: uploadData.caption,
             category: uploadData.category,
             uploaded_by: member.mshs,
@@ -139,6 +139,11 @@ const Gallery = () => {
           .single();
         if (dbError) throw dbError;
         setItems(prev => [{ ...data, type: 'image' }, ...prev]);
+
+        // Hint cho user nếu fallback xảy ra
+        if (result.source === 'drive') {
+          console.info('[Gallery] Ảnh đã lưu trên Google Drive (Supabase đã đầy)');
+        }
       }
 
       // Reset form
@@ -153,9 +158,9 @@ const Gallery = () => {
     }
     setUploading(false);
     setUploadProgress(0);
+    setUploadStatus('');
   }
 
-  // ── Like: route theo loại ──
   async function handleLike(item) {
     const table = item.type === 'video' ? 'videos' : 'gallery';
     setItems(prev => prev.map(it =>
@@ -168,7 +173,6 @@ const Gallery = () => {
     } catch (e) { /* ignore */ }
   }
 
-  // ── Delete: route theo loại ──
   async function handleDelete(item) {
     if (!confirm(`Xóa ${item.type === 'video' ? 'video' : 'ảnh'} này?`)) return;
     const table = item.type === 'video' ? 'videos' : 'gallery';
@@ -253,7 +257,7 @@ const Gallery = () => {
                   >
                     <Film size={40} style={{ opacity: 0.6, marginBottom: '0.5rem' }} />
                     <p><strong>Kéo thả ảnh hoặc video vào đây</strong></p>
-                    <p className="upload-hint">hoặc nhấn để chọn file • Ảnh tối đa 5MB • Video tối đa 200MB</p>
+                    <p className="upload-hint">hoặc nhấn để chọn file • Ảnh tối đa 50MB • Video tối đa 200MB</p>
                     <input
                       ref={fileRef}
                       type="file"
@@ -276,17 +280,24 @@ const Gallery = () => {
                   </select>
                 </div>
 
-                {/* Progress bar khi upload video */}
-                {uploading && fileKind === 'video' && (
+                {/* Progress bar khi upload Drive (video hoặc ảnh fallback) */}
+                {uploading && uploadProgress > 0 && uploadProgress < 100 && (
                   <div className="upload-progress-wrap">
                     <div className="upload-progress-bar" style={{ width: `${uploadProgress}%` }} />
                     <span className="upload-progress-text">{uploadProgress}%</span>
                   </div>
                 )}
 
+                {/* Status text (hiển thị khi đang tải) */}
+                {uploading && uploadStatus && (
+                  <p style={{ fontSize: '0.82rem', color: 'var(--text-muted)', textAlign: 'center', margin: '0.25rem 0' }}>
+                    {uploadStatus}
+                  </p>
+                )}
+
                 <button type="submit" className="btn btn-primary" style={{ width: '100%' }} disabled={uploading || !selectedFile}>
                   {uploading
-                    ? <><Loader2 size={18} className="spin-icon" /> {fileKind === 'video' ? 'Đang tải video lên Drive...' : 'Đang tải lên...'}</>
+                    ? <><Loader2 size={18} className="spin-icon" /> Đang tải lên...</>
                     : <><Upload size={18} /> Tải Lên</>}
                 </button>
               </form>
@@ -323,7 +334,14 @@ const Gallery = () => {
                   </div>
                 </>
               ) : (
-                <img src={item.image_url} alt={item.caption} loading="lazy" onClick={() => setLightbox(item)} />
+                /* ⭐ Ảnh: dùng getPhotoSrc → tự chọn Supabase hay Drive */
+                <img
+                  src={getPhotoSrc(item, 800)}
+                  alt={item.caption}
+                  loading="lazy"
+                  onClick={() => setLightbox(item)}
+                  onError={(e) => { e.target.style.background = '#1a202c'; }}
+                />
               )}
 
               <div className="gallery-overlay" onClick={() => setLightbox(item)}>
@@ -364,7 +382,8 @@ const Gallery = () => {
                   allowFullScreen
                 />
               ) : (
-                <img src={lightbox.image_url} alt={lightbox.caption} />
+                /* ⭐ Ảnh lightbox: getPhotoSrc với size lớn hơn */
+                <img src={getPhotoSrc(lightbox, 1920)} alt={lightbox.caption} />
               )}
 
               <div className="lightbox-info">
