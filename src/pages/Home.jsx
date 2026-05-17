@@ -5,8 +5,8 @@ import { Link } from 'react-router-dom';
 import bentoMembers from '../assets/bento-members.jpg';
 import bentoGallery from '../assets/bento-gallery.jpg';
 import bentoMessages from '../assets/bento-messages.jpg';
-// ⭐ Class collage — Biolộdề · Sinh-ln2326
 import classCollage from '../assets/class-collage.png';
+import ActivityFeed from '../components/ActivityFeed';     // ⭐ NEW
 import './Home.css';
 
 /* ─── Animated counter ────────────────── */
@@ -69,15 +69,13 @@ const timelineData = [
 const Home = () => {
   return (
     <div className="home-page">
-      {/* ═══ HERO: Biolộdề collage full-bleed (light) / deep navy (dark) ═══ */}
+      {/* ═══ HERO ═══ */}
       <section className="hero">
-        {/* ⭐ Collage background — light mode only, hidden trong dark */}
         <div
           className="hero-collage-bg"
           style={{ backgroundImage: `url(${classCollage})` }}
         />
 
-        {/* Dark-mode-only sparkles (giữ vibe đẹp đã có) */}
         <div className="hero-sparkle hero-sparkle-tl"><Sparkle size={28} /></div>
         <div className="hero-sparkle hero-sparkle-tr"><Sparkle size={20} /></div>
         <div className="hero-sparkle hero-sparkle-bl"><Sparkle size={24} /></div>
@@ -191,6 +189,9 @@ const Home = () => {
           <StatCard Icon={Heart} value={1} label="Gia đình duy nhất" />
         </motion.div>
       </section>
+
+      {/* ⭐ ACTIVITY FEED — section "Mới Nhất" */}
+      <ActivityFeed />
 
       {/* ─── BENTO ────────────────────────────── */}
       <section className="bento-section container section">

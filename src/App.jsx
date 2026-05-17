@@ -2,6 +2,7 @@ import { useState, useEffect } from 'react';
 import { BrowserRouter as Router, Routes, Route, useLocation, Navigate } from 'react-router-dom';
 import { AnimatePresence, motion } from 'framer-motion';
 import { AuthProvider, useAuth } from './contexts/AuthContext';
+import { ToastProvider } from './contexts/ToastContext';        // ⭐ NEW
 import Navbar from './components/Navbar';
 import Footer from './components/Footer';
 import ScrollToTop from './components/ScrollToTop';
@@ -58,6 +59,7 @@ function AppContent() {
   const { user } = useAuth();
   const location = useLocation();
   const isLoginPage = location.pathname === '/login';
+
   const [darkMode, setDarkMode] = useState(() => {
     const saved = localStorage.getItem('sinhln-darkmode');
     return saved ? JSON.parse(saved) : false;
@@ -69,7 +71,6 @@ function AppContent() {
   }, [darkMode]);
 
   const toggleDarkMode = () => setDarkMode(prev => !prev);
-
   const showChrome = user && !isLoginPage;
 
   return (
@@ -89,7 +90,9 @@ function App() {
   return (
     <Router>
       <AuthProvider>
-        <AppContent />
+        <ToastProvider>              {/* ⭐ NEW */}
+          <AppContent />
+        </ToastProvider>              {/* ⭐ NEW */}
       </AuthProvider>
     </Router>
   );
