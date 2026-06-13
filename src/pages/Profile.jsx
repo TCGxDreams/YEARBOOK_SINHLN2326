@@ -106,13 +106,29 @@ const Profile = () => {
       return;
     }
 
-    const { error } = await supabase.auth.updateUser({ password: pwData.newPw });
-    if (error) {
-      setPwMsg({ type: 'error', text: error.message });
-    } else {
-      setPwMsg({ type: 'success', text: 'Đã đổi mật khẩu thành công!' });
-      setPwData({ newPw: '', confirmPw: '' });
-      setChangingPw(false);
+    try {
+      // Refresh session trước khi đổi mật khẩu
+      const { error: refreshErr } = await supabase.auth.refreshSession();
+      if (refreshErr) {
+        setPwMsg({ type: 'error', text: 'Phiên đăng nhập đã hết hạn. Vui lòng đăng xuất rồi đăng nhập lại để đổi mật khẩu!' });
+        return;
+      }
+
+      const { error } = await supabase.auth.updateUser({ password: pwData.newPw });
+      if (error) {
+        // Xử lý lỗi 403 / session hết hạn
+        if (error.status === 403 || error.message?.includes('403')) {
+          setPwMsg({ type: 'error', text: 'Phiên đăng nhập đã hết hạn. Vui lòng đăng xuất rồi đăng nhập lại để đổi mật khẩu!' });
+        } else {
+          setPwMsg({ type: 'error', text: error.message });
+        }
+      } else {
+        setPwMsg({ type: 'success', text: 'Đã đổi mật khẩu thành công!' });
+        setPwData({ newPw: '', confirmPw: '' });
+        setChangingPw(false);
+      }
+    } catch (err) {
+      setPwMsg({ type: 'error', text: 'Phiên đăng nhập đã hết hạn. Vui lòng đăng xuất rồi đăng nhập lại!' });
     }
   };
 

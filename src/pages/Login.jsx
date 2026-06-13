@@ -30,10 +30,24 @@ const Login = () => {
     }
 
     setLoading(true);
-    const { error: loginError } = await login(mshs.trim(), password);
+    try {
+      const { error: loginError } = await login(mshs.trim(), password);
 
-    if (loginError) {
-      setError(loginError.message);
+      if (loginError) {
+        // Detect network/DNS errors
+        if (
+          loginError.message?.includes('Load failed') ||
+          loginError.message?.includes('Failed to fetch') ||
+          loginError.message?.includes('NetworkError') ||
+          loginError.message?.includes('fetch')
+        ) {
+          setError('⚠️ Không thể kết nối đến máy chủ. Mạng của bạn có thể đang bị lỗi DNS tạm thời. Hãy thử lại sau 5-10 phút hoặc dùng 4G/5G nhé!');
+        } else {
+          setError(loginError.message);
+        }
+      }
+    } catch (err) {
+      setError('⚠️ Không thể kết nối đến máy chủ. Hãy thử lại sau 5-10 phút hoặc chuyển sang dùng 4G/5G nhé!');
     }
     setLoading(false);
   };
