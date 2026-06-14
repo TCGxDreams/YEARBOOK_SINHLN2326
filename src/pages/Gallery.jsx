@@ -50,6 +50,10 @@ const Gallery = () => {
   const [fileKind, setFileKind] = useState(null);
   const fileRef = useRef(null);
   const touchStartX = useRef(null);                  // ⭐ swipe state
+  const [page, setPage] = useState(0);
+  const [hasMore, setHasMore] = useState(true);
+  const [loadingMore, setLoadingMore] = useState(false);
+  const [likedItems, setLikedItems] = useState([]);
 
   const filtered = filter === 'all' ? items : items.filter(it => it.category === filter);
 
@@ -57,7 +61,18 @@ const Gallery = () => {
   // Fetch + Realtime
   // ════════════════════════════════════════════════════════════
   useEffect(() => {
-    fetchItems();
+    // Load liked items from localStorage
+    const saved = localStorage.getItem('liked_gallery_items');
+    if (saved) {
+      try {
+        setLikedItems(JSON.parse(saved));
+      } catch (e) {
+        setLikedItems([]);
+      }
+    }
+
+    setPage(0);
+    fetchItems(0, true);
 
     const galleryChannel = supabase
       .channel('gallery-realtime')
@@ -103,12 +118,21 @@ const Gallery = () => {
     }
   }
 
-  async function fetchItems() {
-    setLoading(true);
+  async function fetchItems(pageNum = 0, isInitial = false) {
+    if (isInitial) {
+      setLoading(true);
+    } else {
+      setLoadingMore(true);
+    }
+
     try {
+      // 12 items per page: range query on both tables
+      const from = pageNum * 12;
+      const to = from + 11;
+
       const [galleryRes, videosRes] = await Promise.all([
-        supabase.from('gallery').select('*').order('created_at', { ascending: false }),
-        supabase.from('videos').select('*').order('created_at', { ascending: false }),
+        supabase.from('gallery').select('*').order('created_at', { ascending: false }).range(from, to),
+        supabase.from('videos').select('*').order('created_at', { ascending: false }).range(from, to),
       ]);
 
       const images = (galleryRes.data || []).map(img => ({ ...img, type: 'image' }));
@@ -117,13 +141,36 @@ const Gallery = () => {
       const merged = [...images, ...videos].sort(
         (a, b) => new Date(b.created_at) - new Date(a.created_at)
       );
-      setItems(merged);
+
+      if (pageNum === 0) {
+        setItems(merged);
+      } else {
+        setItems(prev => {
+          const existingKeys = new Set(prev.map(it => `${it.type}-${it.id}`));
+          const uniqueNew = merged.filter(it => !existingKeys.has(`${it.type}-${it.id}`));
+          return [...prev, ...uniqueNew].sort(
+            (a, b) => new Date(b.created_at) - new Date(a.created_at)
+          );
+        });
+      }
+
+      const hasMoreImages = galleryRes.data && galleryRes.data.length === 12;
+      const hasMoreVideos = videosRes.data && videosRes.data.length === 12;
+      setHasMore(hasMoreImages || hasMoreVideos);
+
     } catch (e) {
       console.warn('Gallery fetch error:', e);
       toast.error('Không tải được kỷ niệm. Thử lại sau nhé.');
     }
     setLoading(false);
+    setLoadingMore(false);
   }
+
+  const handleLoadMore = () => {
+    const nextPage = page + 1;
+    setPage(nextPage);
+    fetchItems(nextPage, false);
+  };
 
   // ════════════════════════════════════════════════════════════
   // ⭐ Lightbox navigation: keyboard + swipe + prefetch
@@ -272,6 +319,13 @@ const Gallery = () => {
   }
 
   async function handleLike(item) {
+    const key = `${item.type}-${item.id}`;
+    if (likedItems.includes(key)) return;
+
+    const newLiked = [...likedItems, key];
+    setLikedItems(newLiked);
+    localStorage.setItem('liked_gallery_items', JSON.stringify(newLiked));
+
     const table = item.type === 'video' ? 'videos' : 'gallery';
     setItems(prev => prev.map(it =>
       it.id === item.id && it.type === item.type
@@ -461,8 +515,17 @@ const Gallery = () => {
               </div>
 
               <div className="gallery-actions">
-                <button className="gallery-like-btn" onClick={e => { e.stopPropagation(); handleLike(item); }}>
-                  <Heart size={14} /> {item.likes || 0}
+                <button
+                  className={`gallery-like-btn ${likedItems.includes(`${item.type}-${item.id}`) ? 'liked' : ''}`}
+                  onClick={e => { e.stopPropagation(); handleLike(item); }}
+                  style={{ cursor: likedItems.includes(`${item.type}-${item.id}`) ? 'default' : 'pointer' }}
+                >
+                  <Heart
+                    size={14}
+                    fill={likedItems.includes(`${item.type}-${item.id}`) ? '#ef4444' : 'none'}
+                    color={likedItems.includes(`${item.type}-${item.id}`) ? '#ef4444' : 'currentColor'}
+                  />{' '}
+                  {item.likes || 0}
                 </button>
                 {(isAdmin || item.uploaded_by === member?.mshs) && (
                   <button className="gallery-delete-btn" onClick={e => { e.stopPropagation(); handleDelete(item); }}>
@@ -474,6 +537,25 @@ const Gallery = () => {
           ))}
         </motion.div>
       )}
+
+      {/* Load More Button */}
+      {!loading && hasMore && filtered.length > 0 && (
+        <div className="flex-center" style={{ marginTop: '3rem' }}>
+          <button
+            className="btn btn-outline"
+            onClick={handleLoadMore}
+            disabled={loadingMore}
+            style={{ minWidth: '150px' }}
+          >
+            {loadingMore ? (
+              <><Loader2 size={16} className="spin-icon" /> Đang tải...</>
+            ) : (
+              'Tải thêm kỷ niệm'
+            )}
+          </button>
+        </div>
+      )}
+
 
       {/* ⭐ Lightbox với keyboard + swipe + nav buttons + counter */}
       <AnimatePresence>

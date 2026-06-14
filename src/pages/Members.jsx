@@ -1,13 +1,14 @@
 import { useState, useEffect } from 'react';
-import { motion, AnimatePresence } from 'framer-motion';
-import { Search, X, Loader2 } from 'lucide-react';
+import { useNavigate } from 'react-router-dom';
+import { motion } from 'framer-motion';
+import { Search, X, Loader2, Printer } from 'lucide-react';
 import { supabase } from '../lib/supabase';
 import { localMembers } from '../data/members';
 import './Pages.css';
 
 const Members = () => {
+  const navigate = useNavigate();
   const [searchTerm, setSearchTerm] = useState('');
-  const [selectedMember, setSelectedMember] = useState(null);
   const [members, setMembers] = useState([]);
   const [loading, setLoading] = useState(true);
 
@@ -62,19 +63,31 @@ const Members = () => {
         <h1 className="page-title">Gia đình SINHLN</h1>
         <p className="page-subtitle">41 mảnh ghép làm nên thanh xuân rực rỡ nhất</p>
 
-        <div className="search-bar glass">
-          <Search size={18} />
-          <input
-            type="text"
-            placeholder="Tìm theo tên hoặc MSHS..."
-            value={searchTerm}
-            onChange={(e) => setSearchTerm(e.target.value)}
-          />
-          {searchTerm && (
-            <button className="search-clear" onClick={() => setSearchTerm('')}>
-              <X size={16} />
-            </button>
-          )}
+        <div style={{ display: 'flex', gap: '1rem', justifyContent: 'center', alignItems: 'center', width: '100%', maxWidth: '600px', margin: '0 auto 1.5rem', flexWrap: 'wrap' }}>
+          <div className="search-bar glass" style={{ margin: 0, flex: 1, minWidth: '280px' }}>
+            <Search size={18} />
+            <input
+              type="text"
+              placeholder="Tìm theo tên hoặc MSHS..."
+              value={searchTerm}
+              onChange={(e) => setSearchTerm(e.target.value)}
+            />
+            {searchTerm && (
+              <button className="search-clear" onClick={() => setSearchTerm('')}>
+                <X size={16} />
+              </button>
+            )}
+          </div>
+          {/* Tạm thời ẩn nút in kỷ yếu */}
+          {/*
+          <button
+            className="btn btn-outline"
+            onClick={() => navigate('/print-yearbook')}
+            style={{ display: 'inline-flex', alignItems: 'center', gap: '0.4rem', height: '48px', padding: '0 1.25rem' }}
+          >
+            <Printer size={18} /> Xuất PDF Kỷ Yếu
+          </button>
+          */}
         </div>
 
         <p className="member-count">{filtered.length} / {members.length} thành viên</p>
@@ -97,7 +110,7 @@ const Members = () => {
               key={member.mshs}
               className="member-card glass-card premium-member-card"
               variants={itemVariants}
-              onClick={() => setSelectedMember(member)}
+              onClick={() => navigate(`/members/${member.mshs}`)}
               whileHover={{ y: -5, scale: 1.02 }}
               whileTap={{ scale: 0.98 }}
             >
@@ -141,65 +154,6 @@ const Members = () => {
           <p>Không tìm thấy thành viên nào phù hợp</p>
         </div>
       )}
-
-      {/* Member detail modal */}
-      <AnimatePresence>
-        {selectedMember && (
-          <motion.div
-            className="modal-overlay"
-            initial={{ opacity: 0 }}
-            animate={{ opacity: 1 }}
-            exit={{ opacity: 0 }}
-            onClick={() => setSelectedMember(null)}
-          >
-            <motion.div
-              className="modal-content glass"
-              initial={{ scale: 0.8, opacity: 0 }}
-              animate={{ scale: 1, opacity: 1 }}
-              exit={{ scale: 0.8, opacity: 0 }}
-              onClick={(e) => e.stopPropagation()}
-            >
-              <button className="modal-close" onClick={() => setSelectedMember(null)}>
-                <X size={24} />
-              </button>
-              {selectedMember.avatar_url ? (
-                <img
-                  src={selectedMember.avatar_url}
-                  alt={selectedMember.full_name}
-                  className="modal-avatar-img"
-                />
-              ) : (
-                <div className="modal-avatar" style={{ background: `linear-gradient(135deg, ${selectedMember.color}, ${selectedMember.color}99)` }}>
-                  <span>{selectedMember.short_name?.charAt(0)}</span>
-                </div>
-              )}
-              <h2>{selectedMember.full_name}</h2>
-              {selectedMember.nickname && <p className="modal-nickname">"{selectedMember.nickname}"</p>}
-              <div className="modal-details">
-                <div className="detail-item">
-                  <strong>MSHS:</strong> {selectedMember.mshs}
-                </div>
-                <div className="detail-item">
-                  <strong>Lớp:</strong> 12 SINH-LN
-                </div>
-                <div className="detail-item">
-                  <strong>Trường:</strong> Phổ thông Năng khiếu — ĐHQG TP.HCM
-                </div>
-                {selectedMember.quote && (
-                  <div className="detail-item">
-                    <strong>Châm ngôn:</strong> "{selectedMember.quote}"
-                  </div>
-                )}
-                {selectedMember.bio && (
-                  <div className="detail-item">
-                    <strong>Giới thiệu:</strong> {selectedMember.bio}
-                  </div>
-                )}
-              </div>
-            </motion.div>
-          </motion.div>
-        )}
-      </AnimatePresence>
     </div>
   );
 };

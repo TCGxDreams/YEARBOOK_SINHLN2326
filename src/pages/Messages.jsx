@@ -1,6 +1,6 @@
 import { useState, useEffect } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
-import { PenTool, X, Send, Heart, Loader2, ChevronDown, ChevronUp } from 'lucide-react';
+import { PenTool, X, Send, Heart, Loader2, ChevronDown, ChevronUp, Search, MessageSquare } from 'lucide-react';
 import { supabase } from '../lib/supabase';
 import { useAuth } from '../contexts/AuthContext';
 import './Pages.css';
@@ -8,7 +8,7 @@ import './Pages.css';
 const MAX_LENGTH = 150;
 
 /* ─── Message Note with collapse/expand ────── */
-const MessageNote = ({ msg, index, noteColors, pinColors, handleLike, formatDate, itemVariants }) => {
+const MessageNote = ({ msg, index, noteColors, pinColors, handleLike, isLiked, formatDate, itemVariants }) => {
   const [expanded, setExpanded] = useState(false);
   const isLong = msg.content.length > MAX_LENGTH;
   const displayContent = isLong && !expanded
@@ -45,8 +45,12 @@ const MessageNote = ({ msg, index, noteColors, pinColors, handleLike, formatDate
         </button>
       )}
       <div className="note-footer">
-        <button className="note-like-btn" onClick={() => handleLike(msg.id)}>
-          <Heart size={14} /> {msg.likes || 0}
+        <button
+          className={`note-like-btn ${isLiked ? 'liked' : ''}`}
+          onClick={() => { if (!isLiked) handleLike(msg.id); }}
+          style={{ cursor: isLiked ? 'default' : 'pointer' }}
+        >
+          <Heart size={14} fill={isLiked ? '#ef4444' : 'none'} color={isLiked ? '#ef4444' : 'currentColor'} /> {msg.likes || 0}
         </button>
         <div className="note-date">{formatDate(msg.created_at)}</div>
       </div>
@@ -60,35 +64,114 @@ const Messages = () => {
   const [showForm, setShowForm] = useState(false);
   const [messages, setMessages] = useState([]);
   const [loading, setLoading] = useState(true);
+  const [loadingMore, setLoadingMore] = useState(false);
   const [formData, setFormData] = useState({ to: '', content: '' });
   const [isAnonymous, setIsAnonymous] = useState(false);
   const [submitting, setSubmitting] = useState(false);
+  
+  // Search & Filter & Pagination states
+  const [searchQuery, setSearchQuery] = useState('');
+  const [debouncedSearch, setDebouncedSearch] = useState('');
+  const [filter, setFilter] = useState('all');
+  const [page, setPage] = useState(0);
+  const [hasMore, setHasMore] = useState(true);
+  
+  // Likes state
+  const [likedMessages, setLikedMessages] = useState([]);
 
-  // Lấy tin nhắn từ Supabase
+  // Load liked messages from localStorage
   useEffect(() => {
-    fetchMessages();
+    const saved = localStorage.getItem('liked_message_items');
+    if (saved) {
+      try {
+        setLikedMessages(JSON.parse(saved));
+      } catch (e) {
+        setLikedMessages([]);
+      }
+    }
   }, []);
 
-  async function fetchMessages() {
-    setLoading(true);
+  // Debounce search query
+  useEffect(() => {
+    const handler = setTimeout(() => {
+      setDebouncedSearch(searchQuery);
+    }, 400);
+    return () => clearTimeout(handler);
+  }, [searchQuery]);
+
+  // Fetch initial messages when filter/search changes
+  useEffect(() => {
+    setPage(0);
+    fetchMessages(0, true);
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [filter, debouncedSearch]);
+
+  async function fetchMessages(pageNum = 0, isInitial = false) {
+    if (isInitial) {
+      setLoading(true);
+    } else {
+      setLoadingMore(true);
+    }
+
     try {
-      const { data, error } = await supabase
+      let query = supabase
         .from('messages')
         .select('*')
         .order('created_at', { ascending: false });
 
+      // Apply filter
+      if (filter === 'received') {
+        if (member) {
+          query = query.or(`recipient.ilike.%${member.full_name}%,recipient.ilike.%${member.short_name}%`);
+        } else {
+          query = query.eq('recipient', 'nobody');
+        }
+      } else if (filter === 'sent') {
+        if (member) {
+          query = query.eq('author_mshs', member.mshs);
+        } else {
+          query = query.eq('author_mshs', 'none');
+        }
+      } else if (filter === 'anonymous') {
+        query = query.or('author.eq.Ẩn danh,author_mshs.is.null');
+      }
+
+      // Apply search
+      if (debouncedSearch.trim()) {
+        const s = debouncedSearch.trim();
+        query = query.or(`content.ilike.%${s}%,author.ilike.%${s}%,recipient.ilike.%${s}%`);
+      }
+
+      // Range for pagination (12 items per page)
+      const from = pageNum * 12;
+      const to = from + 11;
+      query = query.range(from, to);
+
+      const { data, error } = await query;
+
       if (error) {
-        console.warn('Supabase messages table error:', error.message);
-        // Dùng dữ liệu mẫu nếu bảng chưa tồn tại
+        console.warn('Supabase fetch error:', error.message);
       } else {
-        setMessages(data || []);
+        if (pageNum === 0) {
+          setMessages(data || []);
+        } else {
+          setMessages(prev => [...prev, ...(data || [])]);
+        }
+        setHasMore(data && data.length === 12);
       }
     } catch (err) {
-      console.warn('Could not connect to Supabase, using local data');
+      console.warn('Could not fetch messages:', err);
     }
+
     setLoading(false);
+    setLoadingMore(false);
   }
 
+  const handleLoadMore = () => {
+    const nextPage = page + 1;
+    setPage(nextPage);
+    fetchMessages(nextPage, false);
+  };
 
   async function handleSubmit(e) {
     e.preventDefault();
@@ -113,10 +196,36 @@ const Messages = () => {
 
       if (error) {
         console.warn('Insert error:', error.message);
-        // Fallback: thêm vào local
+        // Fallback local
         setMessages(prev => [{ ...newMsg, id: Date.now().toString(), created_at: new Date().toISOString() }, ...prev]);
       } else {
-        setMessages(prev => [data, ...prev]);
+        // Only prepend if it matches the current filter/search
+        let matches = true;
+        if (filter === 'received') {
+          const toName = data.recipient.toLowerCase();
+          const fullName = member?.full_name?.toLowerCase() || '';
+          const shortName = member?.short_name?.toLowerCase() || '';
+          if (!toName.includes(fullName) && !toName.includes(shortName)) {
+            matches = false;
+          }
+        } else if (filter === 'sent' && data.author_mshs !== member?.mshs) {
+          matches = false;
+        } else if (filter === 'anonymous' && data.author !== 'Ẩn danh' && data.author_mshs !== null) {
+          matches = false;
+        }
+
+        if (debouncedSearch) {
+          const s = debouncedSearch.toLowerCase();
+          if (!data.content.toLowerCase().includes(s) &&
+              !data.author.toLowerCase().includes(s) &&
+              !data.recipient.toLowerCase().includes(s)) {
+            matches = false;
+          }
+        }
+
+        if (matches) {
+          setMessages(prev => [data, ...prev]);
+        }
       }
     } catch (err) {
       setMessages(prev => [{ ...newMsg, id: Date.now().toString(), created_at: new Date().toISOString() }, ...prev]);
@@ -129,6 +238,12 @@ const Messages = () => {
   }
 
   async function handleLike(id) {
+    if (likedMessages.includes(id)) return;
+
+    const newLiked = [...likedMessages, id];
+    setLikedMessages(newLiked);
+    localStorage.setItem('liked_message_items', JSON.stringify(newLiked));
+
     // Optimistic update
     setMessages(prev => prev.map(m =>
       m.id === id ? { ...m, likes: (m.likes || 0) + 1 } : m
@@ -188,6 +303,43 @@ const Messages = () => {
           <PenTool size={18} /> Viết Lưu Bút
         </motion.button>
       </motion.div>
+
+      {/* Messages Search and filter toolbar */}
+      <div className="gallery-toolbar" style={{ display: 'flex', flexDirection: 'column', gap: '1.25rem', alignItems: 'center', width: '100%', maxWidth: '600px', margin: '1.5rem auto 2.5rem' }}>
+        {/* Search Input */}
+        <div className="search-bar glass" style={{ width: '100%', margin: 0 }}>
+          <Search size={18} />
+          <input
+            type="text"
+            placeholder="Tìm theo nội dung, người gửi, người nhận..."
+            value={searchQuery}
+            onChange={(e) => setSearchQuery(e.target.value)}
+          />
+          {searchQuery && (
+            <button className="search-clear" onClick={() => setSearchQuery('')}>
+              <X size={16} />
+            </button>
+          )}
+        </div>
+
+        {/* Filter Tabs */}
+        <div className="filter-tabs" style={{ display: 'flex', flexWrap: 'wrap', justifyContent: 'center', gap: '0.5rem' }}>
+          {[
+            { key: 'all', label: 'Tất cả' },
+            { key: 'received', label: 'Gửi cho tôi' },
+            { key: 'sent', label: 'Tôi đã viết' },
+            { key: 'anonymous', label: 'Ẩn danh' }
+          ].map(tab => (
+            <button
+              key={tab.key}
+              className={`filter-tab ${filter === tab.key ? 'active' : ''}`}
+              onClick={() => setFilter(tab.key)}
+            >
+              {tab.label}
+            </button>
+          ))}
+        </div>
+      </div>
 
       {/* Write form modal */}
       <AnimatePresence>
@@ -263,30 +415,56 @@ const Messages = () => {
         <div className="flex-center" style={{ padding: '4rem' }}>
           <Loader2 size={32} className="spin-icon" style={{ color: 'var(--ptnk-blue)' }} />
         </div>
+      ) : messages.length === 0 ? (
+        <div className="empty-state text-center" style={{ padding: '4rem 1.5rem' }}>
+          <MessageSquare size={48} style={{ display: 'block', margin: '0 auto 1rem', opacity: 0.5 }} />
+          <p style={{ color: 'var(--text-muted)' }}>Chưa có lưu bút nào phù hợp với bộ lọc hiện tại.</p>
+          <p style={{ fontSize: '0.9rem', color: 'var(--text-muted)', marginTop: '0.25rem' }}>Hãy là người đầu tiên để lại lời nhắn yêu thương!</p>
+        </div>
       ) : (
-        <motion.div
-          className="messages-board"
-          variants={containerVariants}
-          initial="hidden"
-          animate="show"
-        >
-          {messages.map((msg, index) => (
-            <MessageNote
-              key={msg.id}
-              msg={msg}
-              index={index}
-              noteColors={noteColors}
-              pinColors={pinColors}
-              handleLike={handleLike}
-              formatDate={formatDate}
-              itemVariants={itemVariants}
-            />
-          ))}
-        </motion.div>
+        <>
+          <motion.div
+            className="messages-board"
+            variants={containerVariants}
+            initial="hidden"
+            animate="show"
+          >
+            {messages.map((msg, index) => (
+              <MessageNote
+                key={msg.id}
+                msg={msg}
+                index={index}
+                noteColors={noteColors}
+                pinColors={pinColors}
+                handleLike={handleLike}
+                isLiked={likedMessages.includes(msg.id)}
+                formatDate={formatDate}
+                itemVariants={itemVariants}
+              />
+            ))}
+          </motion.div>
+
+          {/* Load More Button */}
+          {hasMore && (
+            <div className="flex-center" style={{ marginTop: '3rem' }}>
+              <button
+                className="btn btn-outline"
+                onClick={handleLoadMore}
+                disabled={loadingMore}
+                style={{ minWidth: '150px' }}
+              >
+                {loadingMore ? (
+                  <><Loader2 size={16} className="spin-icon" /> Đang tải...</>
+                ) : (
+                  'Tải thêm lưu bút'
+                )}
+              </button>
+            </div>
+          )}
+        </>
       )}
     </div>
   );
 };
 
 export default Messages;
-
