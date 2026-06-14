@@ -308,7 +308,14 @@ const Profile = () => {
 
           {!changingPw ? (
             <div className="pw-inactive">
-              <p>Mật khẩu mặc định: <code>Ptnk@123</code></p>
+              <p style={{ display: 'flex', flexDirection: 'column', gap: '0.4rem', alignItems: 'center', marginBottom: '1.25rem' }}>
+                <span style={{ color: '#eab308', display: 'inline-flex', alignItems: 'center', gap: '0.25rem', fontWeight: 600 }}>
+                  ⚠️ Cảnh báo bảo mật
+                </span>
+                <span style={{ fontSize: '0.85rem', color: 'var(--text-muted)' }}>
+                  Bạn hãy đổi mật khẩu mới để bảo vệ tài khoản của mình nhé!
+                </span>
+              </p>
               <button className="btn btn-outline" onClick={() => setChangingPw(true)}>
                 <Key size={16} /> Đổi mật khẩu
               </button>

@@ -10,7 +10,7 @@ const Login = () => {
   const { login, user } = useAuth();
   const navigate = useNavigate();
   const [mshs, setMshs] = useState('');
-  const [password, setPassword] = useState('Ptnk@123');
+  const [password, setPassword] = useState('');
   const [showPassword, setShowPassword] = useState(false);
   const [error, setError] = useState('');
   const [loading, setLoading] = useState(false);
