@@ -207,18 +207,17 @@ const AIChatbox = () => {
 
     const preview = messageContent.slice(0, 120) + (messageContent.length > 120 ? '...' : '');
     const confirmed = confirm(
-      'Lưu kỷ niệm này để các bạn khác có thể đọc qua AI?\n\n' +
+      'Lưu kỷ niệm này để các bạn khác có thể đọc qua AI (dưới dạng ẩn danh)?\n\n' +
       '"' + preview + '"\n\n' +
-      'OK = lưu công khai với tên ' + member.full_name +
-      '\nCancel = huỷ'
+      'OK = lưu ẩn danh\nCancel = huỷ'
     );
     if (!confirmed) return;
 
     const { error } = await supabase.from('shared_memories').insert({
       author_mshs: member.mshs,
-      author_name: member.full_name,
+      author_name: 'Ẩn danh',
       content: messageContent,
-      is_anonymous: false,
+      is_anonymous: true,
     });
 
     if (error) {
