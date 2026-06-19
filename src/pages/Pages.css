@@ -1207,18 +1207,21 @@ body.dark-mode .member-role {
 .lightbox-video {
   width: 80vw;
   max-width: 900px;
-  height: 65vh;
-  max-height: 600px;
+  aspect-ratio: 16 / 9;
+  height: auto;
+  max-height: 80vh;
   border: none;
   border-radius: var(--radius-md);
   box-shadow: 0 20px 60px rgba(0, 0, 0, 0.5);
   background: #000;
+  display: block;
 }
 
 @media (max-width: 768px) {
   .lightbox-video {
-    width: 92vw;
-    height: 52vh;
+    width: 90vw;
+    height: auto;
+    aspect-ratio: 16 / 9;
   }
 }
 
