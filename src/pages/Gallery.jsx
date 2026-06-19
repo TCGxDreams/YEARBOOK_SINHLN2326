@@ -356,6 +356,11 @@ const Gallery = () => {
       window.open(downloadUrl, '_blank');
       toast.success('Đang chuẩn bị tải về từ Google Drive...');
     } else if (item.image_url) {
+      if (isMobile) {
+        window.open(item.image_url, '_blank');
+        toast.info('Đã mở ảnh. Hãy đè giữ ảnh và chọn "Thêm vào Ảnh" để lưu vào Thư viện.');
+        return;
+      }
       toast.info('Đang tải ảnh về...');
       try {
         const response = await fetch(item.image_url);
