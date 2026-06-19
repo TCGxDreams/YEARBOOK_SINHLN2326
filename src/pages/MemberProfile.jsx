@@ -1,9 +1,10 @@
 import { useState, useEffect } from 'react';
 import { useParams, useNavigate } from 'react-router-dom';
 import { motion, AnimatePresence } from 'framer-motion';
-import { ChevronLeft, MessageSquare, Image as ImageIcon, Heart, Play, Key, User } from 'lucide-react';
+import { ChevronLeft, MessageSquare, Image as ImageIcon, Heart, Play, Key, User, Loader2 } from 'lucide-react';
 import { supabase } from '../lib/supabase';
 import { localMembers } from '../data/members';
+import { useToast } from '../contexts/ToastContext';
 import './Panel.css'; // Reuses panel styles
 
 const driveThumbnail = (id) => `https://drive.google.com/thumbnail?id=${id}&sz=w400`;
@@ -11,6 +12,7 @@ const driveThumbnail = (id) => `https://drive.google.com/thumbnail?id=${id}&sz=w
 const MemberProfile = () => {
   const { mshs } = useParams();
   const navigate = useNavigate();
+  const toast = useToast();
   const [member, setMember] = useState(null);
   const [loading, setLoading] = useState(true);
   
@@ -350,32 +352,5 @@ const MemberProfile = () => {
     </div>
   );
 };
-
-// Helper Loader component
-const Loader2 = ({ size, className, style }) => (
-  <svg
-    className={className}
-    style={{
-      ...style,
-      animation: 'spin 1s linear infinite',
-      width: size,
-      height: size,
-    }}
-    viewBox="0 0 24 24"
-    fill="none"
-    stroke="currentColor"
-    strokeWidth="2.5"
-    strokeLinecap="round"
-    strokeLinejoin="round"
-  >
-    <path d="M21 12a9 9 0 1 1-6.219-8.56" />
-    <style>{`
-      @keyframes spin {
-        0% { transform: rotate(0deg); }
-        100% { transform: rotate(360deg); }
-      }
-    `}</style>
-  </svg>
-);
 
 export default MemberProfile;

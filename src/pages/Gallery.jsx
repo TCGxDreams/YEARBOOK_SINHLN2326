@@ -2,7 +2,7 @@ import { useState, useEffect, useRef, useCallback } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
 import {
   X, ZoomIn, Upload, Image as ImageIcon, Heart, Trash2, Plus, Play, Film, Loader2,
-  ChevronLeft, ChevronRight,                       // ⭐ lightbox nav
+  ChevronLeft, ChevronRight, Edit3,                 // ⭐ lightbox nav
 } from 'lucide-react';
 import { supabase } from '../lib/supabase';
 import { useAuth } from '../contexts/AuthContext';
@@ -51,11 +51,16 @@ const Gallery = () => {
   const fileRef = useRef(null);
   const touchStartX = useRef(null);                  // ⭐ swipe state
   const [page, setPage] = useState(0);
-  const [hasMore, setHasMore] = useState(true);
   const [loadingMore, setLoadingMore] = useState(false);
   const [likedItems, setLikedItems] = useState([]);
 
   const filtered = filter === 'all' ? items : items.filter(it => it.category === filter);
+  const displayedItems = filtered.slice(0, (page + 1) * 12);
+  const hasMore = (page + 1) * 12 < filtered.length;
+
+  useEffect(() => {
+    setPage(0);
+  }, [filter]);
 
   // ════════════════════════════════════════════════════════════
   // Fetch + Realtime
@@ -72,7 +77,7 @@ const Gallery = () => {
     }
 
     setPage(0);
-    fetchItems(0, true);
+    fetchItems(true);
 
     const galleryChannel = supabase
       .channel('gallery-realtime')
@@ -103,7 +108,8 @@ const Gallery = () => {
     if (eventType === 'INSERT') {
       setItems(prev => {
         if (prev.some(it => it.id === newRow.id && it.type === type)) return prev;
-        return [{ ...newRow, type }, ...prev];
+        const updated = [{ ...newRow, type }, ...prev];
+        return updated.sort((a, b) => new Date(b.created_at) - new Date(a.created_at));
       });
       if (newRow.uploaded_by !== member?.mshs) {
         const who = newRow.uploaded_by_name || 'Ai đó';
@@ -118,21 +124,15 @@ const Gallery = () => {
     }
   }
 
-  async function fetchItems(pageNum = 0, isInitial = false) {
+  async function fetchItems(isInitial = false) {
     if (isInitial) {
       setLoading(true);
-    } else {
-      setLoadingMore(true);
     }
 
     try {
-      // 12 items per page: range query on both tables
-      const from = pageNum * 12;
-      const to = from + 11;
-
       const [galleryRes, videosRes] = await Promise.all([
-        supabase.from('gallery').select('*').order('created_at', { ascending: false }).range(from, to),
-        supabase.from('videos').select('*').order('created_at', { ascending: false }).range(from, to),
+        supabase.from('gallery').select('*').order('created_at', { ascending: false }),
+        supabase.from('videos').select('*').order('created_at', { ascending: false }),
       ]);
 
       const images = (galleryRes.data || []).map(img => ({ ...img, type: 'image' }));
@@ -142,52 +142,38 @@ const Gallery = () => {
         (a, b) => new Date(b.created_at) - new Date(a.created_at)
       );
 
-      if (pageNum === 0) {
-        setItems(merged);
-      } else {
-        setItems(prev => {
-          const existingKeys = new Set(prev.map(it => `${it.type}-${it.id}`));
-          const uniqueNew = merged.filter(it => !existingKeys.has(`${it.type}-${it.id}`));
-          return [...prev, ...uniqueNew].sort(
-            (a, b) => new Date(b.created_at) - new Date(a.created_at)
-          );
-        });
-      }
-
-      const hasMoreImages = galleryRes.data && galleryRes.data.length === 12;
-      const hasMoreVideos = videosRes.data && videosRes.data.length === 12;
-      setHasMore(hasMoreImages || hasMoreVideos);
-
+      setItems(merged);
     } catch (e) {
       console.warn('Gallery fetch error:', e);
       toast.error('Không tải được kỷ niệm. Thử lại sau nhé.');
     }
     setLoading(false);
-    setLoadingMore(false);
   }
 
   const handleLoadMore = () => {
-    const nextPage = page + 1;
-    setPage(nextPage);
-    fetchItems(nextPage, false);
+    setLoadingMore(true);
+    setTimeout(() => {
+      setPage(prev => prev + 1);
+      setLoadingMore(false);
+    }, 400);
   };
 
   // ════════════════════════════════════════════════════════════
   // ⭐ Lightbox navigation: keyboard + swipe + prefetch
   // ════════════════════════════════════════════════════════════
-  const lightboxIndex = lightbox
-    ? filtered.findIndex(it => it.id === lightbox.id && it.type === lightbox.type)
+  const displayedIndex = lightbox
+    ? displayedItems.findIndex(it => it.id === lightbox.id && it.type === lightbox.type)
     : -1;
 
   const goToPrev = useCallback(() => {
-    if (lightboxIndex > 0) setLightbox(filtered[lightboxIndex - 1]);
-  }, [lightboxIndex, filtered]);
+    if (displayedIndex > 0) setLightbox(displayedItems[displayedIndex - 1]);
+  }, [displayedIndex, displayedItems]);
 
   const goToNext = useCallback(() => {
-    if (lightboxIndex >= 0 && lightboxIndex < filtered.length - 1) {
-      setLightbox(filtered[lightboxIndex + 1]);
+    if (displayedIndex >= 0 && displayedIndex < displayedItems.length - 1) {
+      setLightbox(displayedItems[displayedIndex + 1]);
     }
-  }, [lightboxIndex, filtered]);
+  }, [displayedIndex, displayedItems]);
 
   // Keyboard: ←/→/Esc
   useEffect(() => {
@@ -209,9 +195,9 @@ const Gallery = () => {
       const img = new Image();
       img.src = getPhotoSrc(item, 1920);
     };
-    if (lightboxIndex > 0) prefetch(filtered[lightboxIndex - 1]);
-    if (lightboxIndex < filtered.length - 1) prefetch(filtered[lightboxIndex + 1]);
-  }, [lightbox, lightboxIndex, filtered]);
+    if (displayedIndex > 0) prefetch(displayedItems[displayedIndex - 1]);
+    if (displayedIndex < displayedItems.length - 1) prefetch(displayedItems[displayedIndex + 1]);
+  }, [lightbox, displayedIndex, displayedItems]);
 
   // Swipe handlers
   const handleTouchStart = (e) => {
@@ -351,11 +337,45 @@ const Gallery = () => {
     }
   }
 
+  async function handleEditCaption(item) {
+    const newCaption = prompt('Nhập tiêu đề mới cho kỷ niệm:', item.caption || '');
+    if (newCaption === null) return;
+
+    const trimmed = newCaption.trim();
+    const table = item.type === 'video' ? 'videos' : 'gallery';
+
+    // Cập nhật local state trước
+    setItems(prev => prev.map(it =>
+      it.id === item.id && it.type === item.type ? { ...it, caption: trimmed } : it
+    ));
+
+    // Cập nhật lightbox state nếu đang mở chính tệp này
+    setLightbox(prev => {
+      if (prev && prev.id === item.id && prev.type === item.type) {
+        return { ...prev, caption: trimmed };
+      }
+      return prev;
+    });
+
+    try {
+      const { error } = await supabase
+        .from(table)
+        .update({ caption: trimmed })
+        .eq('id', item.id);
+
+      if (error) throw error;
+      toast.success('Đã cập nhật tiêu đề kỷ niệm!');
+    } catch (err) {
+      console.error(err);
+      toast.error('Không cập nhật được tiêu đề. Thử lại sau nhé.');
+    }
+  }
+
   const containerVariants = { hidden: { opacity: 0 }, show: { opacity: 1, transition: { staggerChildren: 0.06 } } };
   const itemVariants = { hidden: { opacity: 0, scale: 0.9 }, show: { opacity: 1, scale: 1, transition: { duration: 0.4 } } };
 
-  const hasPrev = lightboxIndex > 0;
-  const hasNext = lightboxIndex >= 0 && lightboxIndex < filtered.length - 1;
+  const hasPrev = displayedIndex > 0;
+  const hasNext = displayedIndex >= 0 && displayedIndex < displayedItems.length - 1;
 
   return (
     <div className="page-container container section">
@@ -482,7 +502,7 @@ const Gallery = () => {
         </div>
       ) : (
         <motion.div className="gallery-masonry" variants={containerVariants} initial="hidden" animate="show" key={filter}>
-          {filtered.map(item => (
+          {displayedItems.map(item => (
             <motion.div key={`${item.type}-${item.id}`} className="gallery-item" variants={itemVariants}>
               {item.type === 'video' ? (
                 <>
@@ -527,6 +547,16 @@ const Gallery = () => {
                   />{' '}
                   {item.likes || 0}
                 </button>
+                {(isAdmin || item.uploaded_by === member?.mshs || item.uploaded_by_name === 'Everyone') && (
+                  <button 
+                    className="gallery-edit-btn" 
+                    onClick={e => { e.stopPropagation(); handleEditCaption(item); }}
+                    style={{ background: 'none', border: 'none', color: 'var(--text-muted)', display: 'inline-flex', alignItems: 'center', cursor: 'pointer', padding: '4px' }}
+                    title="Sửa tiêu đề"
+                  >
+                    <Edit3 size={14} />
+                  </button>
+                )}
                 {(isAdmin || item.uploaded_by === member?.mshs) && (
                   <button className="gallery-delete-btn" onClick={e => { e.stopPropagation(); handleDelete(item); }}>
                     <Trash2 size={14} />
@@ -570,9 +600,9 @@ const Gallery = () => {
             onTouchEnd={handleTouchEnd}
           >
             {/* Counter top-left */}
-            {filtered.length > 1 && (
+            {displayedItems.length > 1 && (
               <div className="lightbox-counter">
-                {lightboxIndex + 1} / {filtered.length}
+                {displayedIndex + 1} / {displayedItems.length}
               </div>
             )}
 
@@ -624,12 +654,27 @@ const Gallery = () => {
               )}
 
               <div className="lightbox-info">
-                {lightbox.caption && <div className="lightbox-caption">{lightbox.caption}</div>}
+                <div style={{ display: 'flex', alignItems: 'center', gap: '0.5rem', flexWrap: 'wrap' }}>
+                  {lightbox.caption ? (
+                    <div className="lightbox-caption">{lightbox.caption}</div>
+                  ) : (
+                    <div className="lightbox-caption" style={{ fontStyle: 'italic', opacity: 0.6 }}>Chưa có tiêu đề</div>
+                  )}
+                  {(isAdmin || lightbox.uploaded_by === member?.mshs || lightbox.uploaded_by_name === 'Everyone') && (
+                    <button 
+                      onClick={() => handleEditCaption(lightbox)}
+                      style={{ background: 'none', border: 'none', color: 'rgba(255,255,255,0.7)', display: 'inline-flex', alignItems: 'center', cursor: 'pointer', padding: '2px' }}
+                      title="Sửa tiêu đề"
+                    >
+                      <Edit3 size={16} />
+                    </button>
+                  )}
+                </div>
                 {lightbox.uploaded_by_name && <div className="lightbox-author">{lightbox.uploaded_by_name}</div>}
               </div>
 
               {/* Hint phím tắt (chỉ desktop) */}
-              {filtered.length > 1 && (
+              {displayedItems.length > 1 && (
                 <div className="lightbox-hint">
                   ← → để chuyển · Esc để đóng
                 </div>

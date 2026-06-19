@@ -1,6 +1,6 @@
 import { useState, useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
-import { Loader2, Printer, ChevronLeft, Info, HelpCircle } from 'lucide-react';
+import { Loader2, Printer, ChevronLeft, Info } from 'lucide-react';
 import { supabase } from '../lib/supabase';
 import { localMembers } from '../data/members';
 import './Pages.css';
@@ -14,6 +14,12 @@ const PrintYearbook = () => {
   const [gallery, setGallery] = useState([]);
   const [loading, setLoading] = useState(true);
   const [density, setDensity] = useState('4'); // '2' or '4' members per page
+
+  // Image preloading states
+  const [imagesLoaded, setImagesLoaded] = useState(false);
+  const [preloadingImages, setPreloadingImages] = useState(false);
+  const [preloadedCount, setPreloadedCount] = useState(0);
+  const [totalToPreload, setTotalToPreload] = useState(0);
 
   useEffect(() => {
     fetchAllData();
@@ -42,6 +48,53 @@ const PrintYearbook = () => {
     setLoading(false);
   }
 
+  // Preload images once data is fetched
+  useEffect(() => {
+    if (loading) return;
+
+    const urls = [];
+    members.forEach(m => {
+      if (m.avatar_url) urls.push(m.avatar_url);
+    });
+    gallery.forEach(item => {
+      const src = item.image_url || driveThumbnail(item.drive_file_id);
+      if (src) urls.push(src);
+    });
+
+    if (urls.length === 0) {
+      setImagesLoaded(true);
+      return;
+    }
+
+    setTotalToPreload(urls.length);
+    setPreloadingImages(true);
+    let loaded = 0;
+
+    const handleImageLoad = () => {
+      loaded += 1;
+      setPreloadedCount(loaded);
+      if (loaded >= urls.length) {
+        setImagesLoaded(true);
+        setPreloadingImages(false);
+      }
+    };
+
+    urls.forEach(url => {
+      const img = new Image();
+      img.onload = handleImageLoad;
+      img.onerror = handleImageLoad; // count as loaded to avoid hanging
+      img.src = url;
+    });
+
+    // Timeout safety fallback
+    const timeoutId = setTimeout(() => {
+      setImagesLoaded(true);
+      setPreloadingImages(false);
+    }, 6000);
+
+    return () => clearTimeout(timeoutId);
+  }, [loading, members, gallery]);
+
   const handlePrint = () => {
     window.print();
   };
@@ -67,11 +120,13 @@ const PrintYearbook = () => {
     messagePages.push(messages.slice(i, i + messagesPerPage));
   }
 
-  if (loading) {
+  if (loading || (preloadingImages && !imagesLoaded)) {
     return (
-      <div className="loading-screen flex-center" style={{ minHeight: '80vh' }}>
+      <div className="loading-screen flex-center" style={{ minHeight: '80vh', flexDirection: 'column', gap: '1rem' }}>
         <Loader2 size={32} className="spin-icon" style={{ color: 'var(--ptnk-blue)' }} />
-        <span style={{ marginLeft: '0.75rem', fontWeight: 500 }}>Đang chuẩn bị trang in...</span>
+        <span style={{ fontWeight: 500 }}>
+          {loading ? 'Đang chuẩn bị trang in...' : `Đang tối ưu hóa hình ảnh để in (${preloadedCount}/${totalToPreload})...`}
+        </span>
       </div>
     );
   }
