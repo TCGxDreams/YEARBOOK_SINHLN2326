@@ -56,6 +56,13 @@ const Gallery = () => {
   const [editingItem, setEditingItem] = useState(null);
   const [editCaption, setEditCaption] = useState('');
   const [editCategory, setEditCategory] = useState('other');
+  const [isMobile, setIsMobile] = useState(window.innerWidth <= 768);
+
+  useEffect(() => {
+    const handleResize = () => setIsMobile(window.innerWidth <= 768);
+    window.addEventListener('resize', handleResize);
+    return () => window.removeEventListener('resize', handleResize);
+  }, []);
 
   const filtered = filter === 'all' ? items : items.filter(it => it.category === filter);
   const displayedItems = filtered.slice(0, (page + 1) * 12);
@@ -700,13 +707,80 @@ const Gallery = () => {
               </button>
 
               {lightbox.type === 'video' ? (
-                <iframe
-                  src={drivePreview(lightbox.drive_file_id)}
-                  title={lightbox.caption || 'Video'}
-                  className="lightbox-video"
-                  allow="autoplay; fullscreen"
-                  allowFullScreen
-                />
+                isMobile ? (
+                  <div
+                    className="lightbox-video-mobile-placeholder"
+                    onClick={() => window.open(drivePreview(lightbox.drive_file_id), '_blank')}
+                    style={{
+                      position: 'relative',
+                      width: '90vw',
+                      aspectRatio: '16/9',
+                      borderRadius: '8px',
+                      overflow: 'hidden',
+                      cursor: 'pointer',
+                      background: '#000',
+                      display: 'flex',
+                      alignItems: 'center',
+                      justifyContent: 'center'
+                    }}
+                  >
+                    <img
+                      src={driveThumbnail(lightbox.drive_file_id)}
+                      alt={lightbox.caption}
+                      style={{
+                        width: '100%',
+                        height: '100%',
+                        objectFit: 'cover',
+                        opacity: 0.6
+                      }}
+                    />
+                    <div style={{
+                      position: 'absolute',
+                      inset: 0,
+                      display: 'flex',
+                      flexDirection: 'column',
+                      alignItems: 'center',
+                      justifyContent: 'center',
+                      gap: '0.75rem',
+                      color: '#fff',
+                      padding: '1rem'
+                    }}>
+                      <div style={{
+                        background: 'rgba(0, 0, 0, 0.75)',
+                        borderRadius: '50%',
+                        width: '60px',
+                        height: '60px',
+                        display: 'flex',
+                        alignItems: 'center',
+                        justifyContent: 'center',
+                        border: '2px solid #fff',
+                        boxShadow: '0 4px 12px rgba(0,0,0,0.5)'
+                      }}>
+                        <Play size={32} fill="white" color="white" style={{ marginLeft: '4px' }} />
+                      </div>
+                      <span style={{
+                        fontSize: '0.85rem',
+                        fontWeight: 600,
+                        background: 'rgba(0,0,0,0.65)',
+                        backdropFilter: 'blur(4px)',
+                        padding: '6px 12px',
+                        borderRadius: '6px',
+                        border: '1px solid rgba(255,255,255,0.15)',
+                        textAlign: 'center'
+                      }}>
+                        Chạm để xem video Toàn Màn Hình (Google Drive)
+                      </span>
+                    </div>
+                  </div>
+                ) : (
+                  <iframe
+                    src={drivePreview(lightbox.drive_file_id)}
+                    title={lightbox.caption || 'Video'}
+                    className="lightbox-video"
+                    allow="autoplay; fullscreen"
+                    allowFullScreen
+                  />
+                )
               ) : (
                 <img src={getPhotoSrc(lightbox, 1920)} alt={lightbox.caption} />
               )}
