@@ -134,8 +134,11 @@ const MemberProfile = () => {
 
     try {
       const msg = receivedMessages.find(m => m.id === id);
-      await supabase.from('messages').update({ likes: (msg?.likes || 0) + 1 }).eq('id', id);
-    } catch (e) { /* ignore */ }
+      const { error } = await supabase.from('messages').update({ likes: (msg?.likes || 0) + 1 }).eq('id', id);
+      if (error) console.error('Error updating likes on messages:', error);
+    } catch (e) {
+      console.error('Error in handleLikeMessage:', e);
+    }
   };
 
   const handleLikeMedia = async (item) => {
@@ -153,8 +156,11 @@ const MemberProfile = () => {
 
     const table = item.type === 'video' ? 'videos' : 'gallery';
     try {
-      await supabase.from(table).update({ likes: (item.likes || 0) + 1 }).eq('id', item.id);
-    } catch (e) { /* ignore */ }
+      const { error } = await supabase.from(table).update({ likes: (item.likes || 0) + 1 }).eq('id', item.id);
+      if (error) console.error(`Error updating likes on ${table}:`, error);
+    } catch (e) {
+      console.error('Error in handleLikeMedia:', e);
+    }
   };
 
   if (loading) {

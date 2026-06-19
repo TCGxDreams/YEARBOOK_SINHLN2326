@@ -332,12 +332,13 @@ const Messages = () => {
 
     try {
       const msg = messages.find(m => m.id === id);
-      await supabase
+      const { error } = await supabase
         .from('messages')
         .update({ likes: (msg?.likes || 0) + 1 })
         .eq('id', id);
+      if (error) console.error('Error updating likes on messages:', error);
     } catch (err) {
-      // Ignore errors for likes
+      console.error('Error in handleLike:', err);
     }
   }
 

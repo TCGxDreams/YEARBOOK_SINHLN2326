@@ -322,8 +322,11 @@ const Gallery = () => {
         : it
     ));
     try {
-      await supabase.from(table).update({ likes: (item.likes || 0) + 1 }).eq('id', item.id);
-    } catch (e) { /* ignore */ }
+      const { error } = await supabase.from(table).update({ likes: (item.likes || 0) + 1 }).eq('id', item.id);
+      if (error) console.error(`Error updating likes on ${table}:`, error);
+    } catch (e) {
+      console.error('Error in handleLike:', e);
+    }
   }
 
   async function handleDelete(item) {
