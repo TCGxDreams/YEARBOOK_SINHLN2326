@@ -3,6 +3,7 @@ import { motion } from 'framer-motion';
 import { User, Edit3, Save, X, Shield, Key, Quote, BookOpen, Loader2, CheckCircle, Camera, Upload } from 'lucide-react';
 import { useAuth } from '../contexts/AuthContext';
 import { supabase } from '../lib/supabase';
+import { uploadVideoToDrive } from '../lib/uploadVideo';
 import './Panel.css';
 
 const Profile = () => {
@@ -12,6 +13,7 @@ const Profile = () => {
   const [saved, setSaved] = useState(false);
   const [changingPw, setChangingPw] = useState(false);
   const [uploadingAvatar, setUploadingAvatar] = useState(false);
+  const [uploadProgress, setUploadProgress] = useState(null);
   const [pwData, setPwData] = useState({ newPw: '', confirmPw: '' });
   const [pwMsg, setPwMsg] = useState({ type: '', text: '' });
   const fileInputRef = useRef(null);
@@ -50,47 +52,74 @@ const Profile = () => {
     const file = e.target.files?.[0];
     if (!file) return;
 
-    // Validate
-    if (file.size > 2 * 1024 * 1024) {
-      alert('Ảnh quá lớn! Tối đa 2MB');
+    // Validate size limit (50MB)
+    if (file.size > 50 * 1024 * 1024) {
+      alert('Ảnh quá lớn! Tối đa 50MB');
+      if (fileInputRef.current) fileInputRef.current.value = '';
       return;
     }
     if (!file.type.startsWith('image/')) {
       alert('Vui lòng chọn file ảnh!');
+      if (fileInputRef.current) fileInputRef.current.value = '';
       return;
     }
 
     setUploadingAvatar(true);
+    setUploadProgress(0);
+
     try {
-      const ext = file.name.split('.').pop();
-      const filePath = `avatars/${member.mshs}_${Date.now()}.${ext}`;
+      let avatar_url = '';
+      let uploaded = false;
 
-      // Upload to storage
-      const { error: uploadError } = await supabase.storage
-        .from('gallery')
-        .upload(filePath, file, { upsert: true });
+      // If file size is larger than 5MB, upload to Google Drive directly
+      if (file.size > 5 * 1024 * 1024) {
+        console.log('File size > 5MB, uploading directly to Google Drive...');
+        const driveFileId = await uploadVideoToDrive(file, (percent) => {
+          setUploadProgress(percent);
+        });
+        avatar_url = `https://drive.google.com/thumbnail?id=${driveFileId}&sz=w600`;
+        uploaded = true;
+      } else {
+        // Otherwise, try Supabase storage first
+        try {
+          console.log('Uploading to Supabase storage...');
+          const ext = file.name.split('.').pop();
+          const filePath = `avatars/${member.mshs}_${Date.now()}.${ext}`;
 
-      if (uploadError) throw uploadError;
+          const { error: uploadError } = await supabase.storage
+            .from('gallery')
+            .upload(filePath, file, { upsert: true });
 
-      // Get public URL
-      const { data: { publicUrl } } = supabase.storage
-        .from('gallery')
-        .getPublicUrl(filePath);
+          if (uploadError) throw uploadError;
 
-      // Update member record
-      await supabase.from('members')
-        .update({ avatar_url: publicUrl })
-        .eq('mshs', member.mshs);
+          const { data: { publicUrl } } = supabase.storage
+            .from('gallery')
+            .getPublicUrl(filePath);
 
-      // Refresh
-      await updateProfile({ avatar_url: publicUrl });
+          avatar_url = publicUrl;
+          uploaded = true;
+        } catch (supabaseErr) {
+          console.warn('Supabase storage upload failed, falling back to Google Drive:', supabaseErr);
+          const driveFileId = await uploadVideoToDrive(file, (percent) => {
+            setUploadProgress(percent);
+          });
+          avatar_url = `https://drive.google.com/thumbnail?id=${driveFileId}&sz=w600`;
+          uploaded = true;
+        }
+      }
+
+      if (uploaded && avatar_url) {
+        const { error: updateErr } = await updateProfile({ avatar_url });
+        if (updateErr) throw updateErr;
+      }
     } catch (err) {
       console.error('Avatar upload error:', err);
       alert('Không thể upload ảnh. Thử lại sau!');
+    } finally {
+      setUploadingAvatar(false);
+      setUploadProgress(null);
+      if (fileInputRef.current) fileInputRef.current.value = '';
     }
-    setUploadingAvatar(false);
-    // Reset file input
-    if (fileInputRef.current) fileInputRef.current.value = '';
   };
 
   const handleChangePassword = async (e) => {
@@ -180,6 +209,14 @@ const Profile = () => {
                   style={{ background: `linear-gradient(135deg, ${member.color}, ${member.color}88)` }}
                 >
                   <span>{member.short_name?.charAt(0)}</span>
+                </div>
+              )}
+              {uploadingAvatar && (
+                <div className="profile-avatar-overlay">
+                  <Loader2 size={20} className="spin-icon" />
+                  <span style={{ fontSize: '0.8rem', marginTop: '0.2rem' }}>
+                    {uploadProgress !== null ? `${uploadProgress}%` : 'Đang tải...'}
+                  </span>
                 </div>
               )}
               <button
