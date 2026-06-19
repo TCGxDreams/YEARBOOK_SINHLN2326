@@ -2,7 +2,7 @@ import { useState, useEffect, useRef, useCallback } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
 import {
   X, ZoomIn, Upload, Image as ImageIcon, Heart, Trash2, Plus, Play, Film, Loader2,
-  ChevronLeft, ChevronRight, Edit3,                 // ⭐ lightbox nav
+  ChevronLeft, ChevronRight, Edit3, Save,                 // ⭐ lightbox nav
 } from 'lucide-react';
 import { supabase } from '../lib/supabase';
 import { useAuth } from '../contexts/AuthContext';
@@ -53,6 +53,9 @@ const Gallery = () => {
   const [page, setPage] = useState(0);
   const [loadingMore, setLoadingMore] = useState(false);
   const [likedItems, setLikedItems] = useState([]);
+  const [editingItem, setEditingItem] = useState(null);
+  const [editCaption, setEditCaption] = useState('');
+  const [editCategory, setEditCategory] = useState('other');
 
   const filtered = filter === 'all' ? items : items.filter(it => it.category === filter);
   const displayedItems = filtered.slice(0, (page + 1) * 12);
@@ -337,22 +340,27 @@ const Gallery = () => {
     }
   }
 
-  async function handleEditCaption(item) {
-    const newCaption = prompt('Nhập tiêu đề mới cho kỷ niệm:', item.caption || '');
-    if (newCaption === null) return;
+  function handleEditCaption(item) {
+    setEditingItem(item);
+    setEditCaption(item.caption || '');
+    setEditCategory(item.category || 'other');
+  }
 
-    const trimmed = newCaption.trim();
-    const table = item.type === 'video' ? 'videos' : 'gallery';
+  async function handleSaveEdit(e) {
+    e.preventDefault();
+    if (!editingItem) return;
+    const table = editingItem.type === 'video' ? 'videos' : 'gallery';
+    const trimmed = editCaption.trim();
 
     // Cập nhật local state trước
     setItems(prev => prev.map(it =>
-      it.id === item.id && it.type === item.type ? { ...it, caption: trimmed } : it
+      it.id === editingItem.id && it.type === editingItem.type ? { ...it, caption: trimmed, category: editCategory } : it
     ));
 
     // Cập nhật lightbox state nếu đang mở chính tệp này
     setLightbox(prev => {
-      if (prev && prev.id === item.id && prev.type === item.type) {
-        return { ...prev, caption: trimmed };
+      if (prev && prev.id === editingItem.id && prev.type === editingItem.type) {
+        return { ...prev, caption: trimmed, category: editCategory };
       }
       return prev;
     });
@@ -360,14 +368,15 @@ const Gallery = () => {
     try {
       const { error } = await supabase
         .from(table)
-        .update({ caption: trimmed })
-        .eq('id', item.id);
+        .update({ caption: trimmed, category: editCategory })
+        .eq('id', editingItem.id);
 
       if (error) throw error;
-      toast.success('Đã cập nhật tiêu đề kỷ niệm!');
+      toast.success('Đã cập nhật kỷ niệm thành công!');
+      setEditingItem(null);
     } catch (err) {
       console.error(err);
-      toast.error('Không cập nhật được tiêu đề. Thử lại sau nhé.');
+      toast.error('Không cập nhật được kỷ niệm. Thử lại sau nhé.');
     }
   }
 
@@ -486,6 +495,52 @@ const Gallery = () => {
                     ? <><Loader2 size={18} className="spin-icon" /> Đang tải lên...</>
                     : <><Upload size={18} /> Tải Lên</>}
                 </button>
+              </form>
+            </motion.div>
+          </motion.div>
+        )}
+      </AnimatePresence>
+
+      {/* Edit Modal */}
+      <AnimatePresence>
+        {editingItem && (
+          <motion.div className="modal-overlay" initial={{ opacity: 0 }} animate={{ opacity: 1 }} exit={{ opacity: 0 }} onClick={() => setEditingItem(null)}>
+            <motion.div className="modal-content glass upload-modal" initial={{ scale: 0.85, opacity: 0 }} animate={{ scale: 1, opacity: 1 }} exit={{ scale: 0.85, opacity: 0 }} onClick={e => e.stopPropagation()}>
+              <button className="modal-close" onClick={() => setEditingItem(null)}><X size={24} /></button>
+              <h2 className="form-title" style={{ display: 'flex', alignItems: 'center', gap: '0.5rem' }}>
+                <Edit3 size={22} style={{ color: 'var(--ptnk-blue)' }} /> Sửa tiêu đề / Danh mục
+              </h2>
+
+              <form onSubmit={handleSaveEdit} className="write-form">
+                <div className="upload-preview-container" style={{ marginBottom: '1.25rem' }}>
+                  {editingItem.type === 'video' ? (
+                    <div style={{ position: 'relative' }}>
+                      <img src={getPhotoSrc(editingItem, 600)} alt="Preview" className="upload-preview-img" style={{ maxHeight: '180px' }} />
+                      <div className="video-play-badge" style={{ pointerEvents: 'none' }}>
+                        <Play size={20} fill="white" />
+                      </div>
+                    </div>
+                  ) : (
+                    <img src={getPhotoSrc(editingItem, 600)} alt="Preview" className="upload-preview-img" style={{ maxHeight: '180px' }} />
+                  )}
+                </div>
+
+                <div className="form-group">
+                  <label>Mô tả kỷ niệm</label>
+                  <input type="text" placeholder="VD: Dã ngoại Đà Lạt 2025" value={editCaption} onChange={e => setEditCaption(e.target.value)} autoFocus />
+                </div>
+
+                <div className="form-group">
+                  <label>Danh mục</label>
+                  <select className="form-select" value={editCategory} onChange={e => setEditCategory(e.target.value)}>
+                    {CATEGORIES.filter(c => c.key !== 'all').map(c => <option key={c.key} value={c.key}>{c.label}</option>)}
+                  </select>
+                </div>
+
+                <div className="flex-center" style={{ gap: '0.75rem', marginTop: '1.5rem' }}>
+                  <button type="button" className="btn btn-outline" onClick={() => setEditingItem(null)} style={{ flex: 1 }}>Hủy</button>
+                  <button type="submit" className="btn btn-primary" style={{ flex: 1 }}><Save size={18} /> Lưu</button>
+                </div>
               </form>
             </motion.div>
           </motion.div>

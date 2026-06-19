@@ -1,9 +1,10 @@
 import { useState, useEffect } from 'react';
 import { motion } from 'framer-motion';
-import { Shield, Users, MessageSquare, Image as ImageIcon, Trash2, Search, RefreshCw, Edit3, Save, X, Loader2, Heart } from 'lucide-react';
+import { Shield, Users, MessageSquare, Image as ImageIcon, Trash2, Search, RefreshCw, Edit3, Save, X, Loader2, Heart, Play } from 'lucide-react';
 import { useAuth } from '../contexts/AuthContext';
 import { supabase } from '../lib/supabase';
 import { useNavigate } from 'react-router-dom';
+import { getPhotoSrc } from '../lib/uploadPhoto';
 import './Panel.css';
 
 const Admin = () => {
@@ -48,8 +49,23 @@ const Admin = () => {
 
   async function fetchGallery() {
     setLoading(true);
-    const { data } = await supabase.from('gallery').select('*').order('created_at', { ascending: false });
-    setGallery(data || []);
+    try {
+      const [galleryRes, videosRes] = await Promise.all([
+        supabase.from('gallery').select('*').order('created_at', { ascending: false }),
+        supabase.from('videos').select('*').order('created_at', { ascending: false }),
+      ]);
+
+      const images = (galleryRes.data || []).map(img => ({ ...img, type: 'image' }));
+      const videos = (videosRes.data || []).map(vid => ({ ...vid, type: 'video' }));
+
+      const merged = [...images, ...videos].sort(
+        (a, b) => new Date(b.created_at) - new Date(a.created_at)
+      );
+
+      setGallery(merged);
+    } catch (e) {
+      console.error('Fetch gallery error:', e);
+    }
     setLoading(false);
   }
 
@@ -72,20 +88,22 @@ const Admin = () => {
     fetchMessages();
   }
 
-  async function handleDeletePhoto(id) {
-    await supabase.from('gallery').delete().eq('id', id);
+  async function handleDeletePhoto(id, type) {
+    const table = type === 'video' ? 'videos' : 'gallery';
+    await supabase.from(table).delete().eq('id', id);
     setDeleteConfirm(null);
     fetchGallery();
   }
 
   async function handleEditCaption(photo) {
-    setEditingId(photo.id);
-    setEditForm({ caption: photo.caption || '', category: photo.category || 'other' });
+    setEditingId(`${photo.type}-${photo.id}`);
+    setEditForm({ caption: photo.caption || '', category: photo.category || 'other', type: photo.type });
   }
 
-  async function handleSaveCaption(id) {
+  async function handleSaveCaption(id, type) {
     setSaving(true);
-    await supabase.from('gallery').update({ caption: editForm.caption, category: editForm.category }).eq('id', id);
+    const table = type === 'video' ? 'videos' : 'gallery';
+    await supabase.from(table).update({ caption: editForm.caption, category: editForm.category }).eq('id', id);
     setEditingId(null);
     setSaving(false);
     fetchGallery();
@@ -234,7 +252,7 @@ const Admin = () => {
       {activeTab === 'gallery' && (
         <motion.div initial={{ opacity: 0 }} animate={{ opacity: 1 }}>
           <div className="admin-toolbar">
-            <span className="toolbar-info">{gallery.length} ảnh kỷ niệm</span>
+            <span className="toolbar-info">{gallery.length} kỷ niệm (ảnh/video)</span>
             <button className="btn btn-outline btn-sm" onClick={fetchGallery}><RefreshCw size={16} /> Làm mới</button>
           </div>
 
@@ -242,53 +260,103 @@ const Admin = () => {
             <div className="flex-center" style={{ padding: '3rem' }}><Loader2 size={28} className="spin-icon" /></div>
           ) : (
             <div className="admin-gallery-grid">
-              {gallery.map(photo => (
-                <motion.div key={photo.id} className="admin-photo-card glass-card" initial={{ opacity: 0, scale: 0.95 }} animate={{ opacity: 1, scale: 1 }}>
-                  <div className="admin-photo-img">
-                    <img src={photo.image_url} alt={photo.caption} loading="lazy" />
-                  </div>
-                  <div className="admin-photo-info">
-                    {editingId === photo.id ? (
-                      <div className="admin-photo-edit">
-                        <input className="table-input" placeholder="Mô tả..." value={editForm.caption} onChange={e => setEditForm(p => ({ ...p, caption: e.target.value }))} />
-                        <select className="table-input" value={editForm.category} onChange={e => setEditForm(p => ({ ...p, category: e.target.value }))}>
-                          <option value="school">Trường lớp</option>
-                          <option value="trip">Dã ngoại</option>
-                          <option value="hangout">Tụ tập</option>
-                          <option value="event">Sự kiện</option>
-                          <option value="other">Khác</option>
-                        </select>
-                        <div className="table-actions">
-                          <button className="action-btn save" onClick={() => handleSaveCaption(photo.id)} disabled={saving}>
-                            {saving ? <Loader2 size={14} className="spin-icon" /> : <Save size={14} />} Lưu
-                          </button>
-                          <button className="action-btn cancel" onClick={() => setEditingId(null)}><X size={14} /></button>
+              {gallery.map(photo => {
+                const compositeKey = `${photo.type}-${photo.id}`;
+                const CATEGORY_MAP = {
+                  school: 'Trường lớp',
+                  trip: 'Dã ngoại',
+                  hangout: 'Tụ tập',
+                  event: 'Sự kiện',
+                  other: 'Khác',
+                };
+                return (
+                  <motion.div key={compositeKey} className="admin-photo-card glass-card" initial={{ opacity: 0, scale: 0.95 }} animate={{ opacity: 1, scale: 1 }}>
+                    <div className="admin-photo-img" style={{ position: 'relative' }}>
+                      <img src={getPhotoSrc(photo, 600)} alt={photo.caption} loading="lazy" />
+                      {photo.type === 'video' && (
+                        <div style={{
+                          position: 'absolute',
+                          inset: 0,
+                          background: 'rgba(0, 0, 0, 0.25)',
+                          display: 'flex',
+                          alignItems: 'center',
+                          justifyContent: 'center',
+                        }}>
+                          <div style={{
+                            background: 'rgba(0, 0, 0, 0.65)',
+                            borderRadius: '50%',
+                            width: '40px',
+                            height: '40px',
+                            display: 'flex',
+                            alignItems: 'center',
+                            justifyContent: 'center',
+                            backdropFilter: 'blur(4px)',
+                            border: '1.5px solid rgba(255, 255, 255, 0.8)',
+                          }}>
+                            <Play size={20} fill="white" color="white" style={{ marginLeft: '2px' }} />
+                          </div>
+                          <span style={{
+                            position: 'absolute',
+                            top: '8px',
+                            right: '8px',
+                            fontSize: '0.65rem',
+                            fontWeight: 'bold',
+                            color: 'white',
+                            background: 'var(--ptnk-blue)',
+                            padding: '2px 6px',
+                            borderRadius: '4px',
+                            textTransform: 'uppercase',
+                            letterSpacing: '0.5px'
+                          }}>Video</span>
                         </div>
-                      </div>
-                    ) : (
-                      <>
-                        <p className="admin-photo-caption">{photo.caption || 'Chưa có mô tả'}</p>
-                        <div className="admin-photo-meta">
-                          <span className="photo-category-tag">{photo.category}</span>
-                          <span><ImageIcon size={14} /> {photo.uploaded_by_name || photo.uploaded_by}</span>
-                          <span><Heart size={14} /> {photo.likes || 0}</span>
+                      )}
+                    </div>
+                    <div className="admin-photo-info">
+                      {editingId === compositeKey ? (
+                        <div className="admin-photo-edit">
+                          <input className="table-input" placeholder="Mô tả..." value={editForm.caption} onChange={e => setEditForm(p => ({ ...p, caption: e.target.value }))} />
+                          <select className="table-input" value={editForm.category} onChange={e => setEditForm(p => ({ ...p, category: e.target.value }))}>
+                            <option value="school">Trường lớp</option>
+                            <option value="trip">Dã ngoại</option>
+                            <option value="hangout">Tụ tập</option>
+                            <option value="event">Sự kiện</option>
+                            <option value="other">Khác</option>
+                          </select>
+                          <div className="table-actions">
+                            <button className="action-btn save" onClick={() => handleSaveCaption(photo.id, photo.type)} disabled={saving}>
+                              {saving ? <Loader2 size={14} className="spin-icon" /> : <Save size={14} />} Lưu
+                            </button>
+                            <button className="action-btn cancel" onClick={() => setEditingId(null)}><X size={14} /></button>
+                          </div>
                         </div>
-                        <div className="admin-photo-actions">
-                          <button className="action-btn edit" onClick={() => handleEditCaption(photo)}><Edit3 size={14} /> Sửa</button>
-                          {deleteConfirm === photo.id ? (
-                            <div className="delete-confirm">
-                              <button className="action-btn delete" onClick={() => handleDeletePhoto(photo.id)}>Xóa</button>
-                              <button className="action-btn cancel" onClick={() => setDeleteConfirm(null)}>Hủy</button>
-                            </div>
-                          ) : (
-                            <button className="action-btn delete" onClick={() => setDeleteConfirm(photo.id)}><Trash2 size={14} /> Xóa</button>
-                          )}
-                        </div>
-                      </>
-                    )}
-                  </div>
-                </motion.div>
-              ))}
+                      ) : (
+                        <>
+                          <p className="admin-photo-caption">{photo.caption || 'Chưa có mô tả'}</p>
+                          <div className="admin-photo-meta">
+                            <span className="photo-category-tag">{CATEGORY_MAP[photo.category] || photo.category || 'Khác'}</span>
+                            <span style={{ display: 'inline-flex', alignItems: 'center', gap: '3px' }}>
+                              {photo.type === 'video' ? <Play size={12} /> : <ImageIcon size={12} />}
+                              {photo.uploaded_by_name || photo.uploaded_by || 'Everyone'}
+                            </span>
+                            <span><Heart size={12} /> {photo.likes || 0}</span>
+                          </div>
+                          <div className="admin-photo-actions">
+                            <button className="action-btn edit" onClick={() => handleEditCaption(photo)}><Edit3 size={14} /> Sửa</button>
+                            {deleteConfirm === compositeKey ? (
+                              <div className="delete-confirm">
+                                <button className="action-btn delete" onClick={() => handleDeletePhoto(photo.id, photo.type)}>Xóa</button>
+                                <button className="action-btn cancel" onClick={() => setDeleteConfirm(null)}>Hủy</button>
+                              </div>
+                            ) : (
+                              <button className="action-btn delete" onClick={() => setDeleteConfirm(compositeKey)}><Trash2 size={14} /> Xóa</button>
+                            )}
+                          </div>
+                        </>
+                      )}
+                    </div>
+                  </motion.div>
+                );
+              })}
             </div>
           )}
         </motion.div>
