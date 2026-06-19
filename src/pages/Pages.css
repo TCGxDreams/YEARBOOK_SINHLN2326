@@ -595,6 +595,7 @@ body.dark-mode .member-role {
 }
 
 .gallery-like-btn,
+.gallery-download-btn,
 .gallery-delete-btn {
   display: flex;
   align-items: center;
@@ -613,6 +614,10 @@ body.dark-mode .member-role {
 
 .gallery-like-btn:hover {
   background: rgba(239, 68, 68, 0.5);
+}
+
+.gallery-download-btn:hover {
+  background: rgba(59, 130, 246, 0.5);
 }
 
 .gallery-delete-btn:hover {

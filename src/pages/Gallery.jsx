@@ -2,7 +2,7 @@ import { useState, useEffect, useRef, useCallback } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
 import {
   X, ZoomIn, Upload, Image as ImageIcon, Heart, Trash2, Plus, Play, Film, Loader2,
-  ChevronLeft, ChevronRight, Edit3, Save,                 // ⭐ lightbox nav
+  ChevronLeft, ChevronRight, Edit3, Save, Download,        // ⭐ lightbox nav
 } from 'lucide-react';
 import { supabase } from '../lib/supabase';
 import { useAuth } from '../contexts/AuthContext';
@@ -350,6 +350,35 @@ const Gallery = () => {
     }
   }
 
+  const handleDownload = async (item) => {
+    if (item.drive_file_id) {
+      const downloadUrl = `https://drive.google.com/uc?export=download&id=${item.drive_file_id}`;
+      window.open(downloadUrl, '_blank');
+      toast.success('Đang chuẩn bị tải về từ Google Drive...');
+    } else if (item.image_url) {
+      toast.info('Đang tải ảnh về...');
+      try {
+        const response = await fetch(item.image_url);
+        const blob = await response.blob();
+        const url = window.URL.createObjectURL(blob);
+        const a = document.createElement('a');
+        a.href = url;
+        
+        const ext = item.image_url.split('.').pop()?.split('?')[0] || 'jpg';
+        a.download = `${item.caption || 'ky-niem'}_${item.id}.${ext}`;
+        
+        document.body.appendChild(a);
+        a.click();
+        document.body.removeChild(a);
+        window.URL.revokeObjectURL(url);
+        toast.success('Đã tải ảnh về thành công!');
+      } catch (err) {
+        console.error('Download error:', err);
+        window.open(item.image_url, '_blank');
+      }
+    }
+  };
+
   function handleEditCaption(item) {
     setEditingItem(item);
     setEditCaption(item.caption || '');
@@ -612,6 +641,13 @@ const Gallery = () => {
                   />{' '}
                   {item.likes || 0}
                 </button>
+                <button
+                  className="gallery-download-btn"
+                  onClick={e => { e.stopPropagation(); handleDownload(item); }}
+                  title="Tải về"
+                >
+                  <Download size={14} />
+                </button>
                 {(isAdmin || item.uploaded_by === member?.mshs || item.uploaded_by_name === 'Everyone') && (
                   <button 
                     className="gallery-edit-btn" 
@@ -801,6 +837,13 @@ const Gallery = () => {
                       <Edit3 size={16} />
                     </button>
                   )}
+                  <button 
+                    onClick={() => handleDownload(lightbox)}
+                    style={{ background: 'none', border: 'none', color: 'rgba(255,255,255,0.7)', display: 'inline-flex', alignItems: 'center', cursor: 'pointer', padding: '2px' }}
+                    title="Tải về máy"
+                  >
+                    <Download size={16} />
+                  </button>
                 </div>
                 {lightbox.uploaded_by_name && <div className="lightbox-author">{lightbox.uploaded_by_name}</div>}
               </div>
