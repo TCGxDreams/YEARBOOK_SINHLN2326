@@ -68,6 +68,13 @@ const Messages = () => {
   const [formData, setFormData] = useState({ to: '', content: '' });
   const [isAnonymous, setIsAnonymous] = useState(false);
   const [submitting, setSubmitting] = useState(false);
+
+  // Suggestions / Tagging states
+  const [membersList, setMembersList] = useState([]);
+  const [showSuggestions, setShowSuggestions] = useState(false);
+  const [suggestions, setSuggestions] = useState([]);
+  const [suggestionsTriggerIdx, setSuggestionsTriggerIdx] = useState(-1);
+  const [activeSuggestionIdx, setActiveSuggestionIdx] = useState(0);
   
   // Search & Filter & Pagination states
   const [searchQuery, setSearchQuery] = useState('');
@@ -89,6 +96,24 @@ const Messages = () => {
         setLikedMessages([]);
       }
     }
+  }, []);
+
+  // Fetch members list for tagging suggestions
+  useEffect(() => {
+    async function fetchMembers() {
+      try {
+        const { data } = await supabase
+          .from('members')
+          .select('full_name, short_name, nickname, mshs, color')
+          .order('full_name');
+        if (data) {
+          setMembersList(data);
+        }
+      } catch (err) {
+        console.warn('Error fetching members for tagging:', err);
+      }
+    }
+    fetchMembers();
   }, []);
 
   // Debounce search query
@@ -171,6 +196,62 @@ const Messages = () => {
     const nextPage = page + 1;
     setPage(nextPage);
     fetchMessages(nextPage, false);
+  };
+
+  const handleToChange = (e) => {
+    const val = e.target.value;
+    setFormData(prev => ({ ...prev, to: val }));
+
+    const lastAtIdx = val.lastIndexOf('@');
+    if (lastAtIdx !== -1) {
+      const isStart = lastAtIdx === 0 || val[lastAtIdx - 1] === ' ' || val[lastAtIdx - 1] === ',';
+      if (isStart) {
+        const query = val.slice(lastAtIdx + 1).toLowerCase();
+        setSuggestionsTriggerIdx(lastAtIdx);
+        
+        const filtered = membersList.filter(m => 
+          m.full_name.toLowerCase().includes(query) ||
+          m.short_name.toLowerCase().includes(query) ||
+          (m.nickname && m.nickname.toLowerCase().includes(query))
+        );
+        
+        setSuggestions(filtered);
+        setShowSuggestions(filtered.length > 0);
+        setActiveSuggestionIdx(0);
+        return;
+      }
+    }
+    
+    setShowSuggestions(false);
+    setSuggestionsTriggerIdx(-1);
+  };
+
+  const handleToKeyDown = (e) => {
+    if (!showSuggestions) return;
+
+    if (e.key === 'ArrowDown') {
+      e.preventDefault();
+      setActiveSuggestionIdx(prev => (prev + 1) % suggestions.length);
+    } else if (e.key === 'ArrowUp') {
+      e.preventDefault();
+      setActiveSuggestionIdx(prev => (prev - 1 + suggestions.length) % suggestions.length);
+    } else if (e.key === 'Enter') {
+      e.preventDefault();
+      selectMember(suggestions[activeSuggestionIdx]);
+    } else if (e.key === 'Escape') {
+      e.preventDefault();
+      setShowSuggestions(false);
+    }
+  };
+
+  const selectMember = (m) => {
+    if (suggestionsTriggerIdx === -1) return;
+    
+    const beforeAt = formData.to.slice(0, suggestionsTriggerIdx);
+    const newTo = beforeAt + m.full_name;
+    setFormData(prev => ({ ...prev, to: newTo }));
+    setShowSuggestions(false);
+    setSuggestionsTriggerIdx(-1);
   };
 
   async function handleSubmit(e) {
@@ -376,14 +457,40 @@ const Messages = () => {
                   />
                   <label htmlFor="anonymous" style={{ margin: 0, cursor: 'pointer', fontSize: '0.9rem' }}>Đăng ẩn danh (Không hiện tên)</label>
                 </div>
-                <div className="form-group">
+                <div className="form-group" style={{ position: 'relative' }}>
                   <label>Gửi đến</label>
                   <input
                     type="text"
-                    placeholder="Cả lớp, hoặc tên cụ thể..."
+                    placeholder="Cả lớp, hoặc tên cụ thể... (Gõ @ để tag)"
                     value={formData.to}
-                    onChange={(e) => setFormData(prev => ({ ...prev, to: e.target.value }))}
+                    onChange={handleToChange}
+                    onKeyDown={handleToKeyDown}
+                    onBlur={() => {
+                      setTimeout(() => setShowSuggestions(false), 200);
+                    }}
+                    autoComplete="off"
                   />
+                  {showSuggestions && (
+                    <div className="tag-suggestions-dropdown glass">
+                      {suggestions.map((m, index) => (
+                        <div
+                          key={m.mshs}
+                          className={`tag-suggestion-item ${index === activeSuggestionIdx ? 'active' : ''}`}
+                          onClick={() => selectMember(m)}
+                          onMouseEnter={() => setActiveSuggestionIdx(index)}
+                        >
+                          <div className="suggestion-avatar" style={{ background: m.color || 'var(--ptnk-blue)' }}>
+                            {m.short_name?.charAt(0) || m.full_name?.charAt(0)}
+                          </div>
+                          <div className="suggestion-info">
+                            <span className="suggestion-name">{m.full_name}</span>
+                            {m.nickname && <span className="suggestion-nickname">({m.nickname})</span>}
+                          </div>
+                          <span className="suggestion-mshs">{m.mshs}</span>
+                        </div>
+                      ))}
+                    </div>
+                  )}
                 </div>
                 <div className="form-group">
                   <label>Lời nhắn</label>

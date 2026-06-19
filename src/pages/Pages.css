@@ -1332,3 +1332,91 @@ body.dark-mode .member-role {
     height: 38px;
   }
 }
+
+/* ─── Tag Autocomplete Dropdown ────────────── */
+.tag-suggestions-dropdown {
+  position: absolute;
+  top: 100%;
+  left: 0;
+  right: 0;
+  background: var(--card-bg);
+  border: 1px solid var(--border-color);
+  border-radius: var(--radius-md);
+  box-shadow: var(--shadow-lg);
+  max-height: 200px;
+  overflow-y: auto;
+  z-index: 100;
+  margin-top: 4px;
+}
+
+body.dark-mode .tag-suggestions-dropdown {
+  background: rgba(26, 32, 44, 0.95);
+  backdrop-filter: blur(12px);
+  border-color: rgba(255, 255, 255, 0.1);
+}
+
+.tag-suggestion-item {
+  display: flex;
+  align-items: center;
+  gap: 0.75rem;
+  padding: 0.6rem 0.85rem;
+  cursor: pointer;
+  transition: background var(--transition-fast);
+  border-bottom: 1px solid rgba(0, 0, 0, 0.02);
+}
+
+body.dark-mode .tag-suggestion-item {
+  border-bottom-color: rgba(255, 255, 255, 0.02);
+}
+
+.tag-suggestion-item:last-child {
+  border-bottom: none;
+}
+
+.tag-suggestion-item.active,
+.tag-suggestion-item:hover {
+  background: rgba(0, 51, 153, 0.05);
+}
+
+body.dark-mode .tag-suggestion-item.active,
+body.dark-mode .tag-suggestion-item:hover {
+  background: rgba(255, 255, 255, 0.08);
+}
+
+.suggestion-avatar {
+  width: 28px;
+  height: 28px;
+  border-radius: 50%;
+  color: white;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-weight: bold;
+  font-size: 0.8rem;
+  flex-shrink: 0;
+}
+
+.suggestion-info {
+  display: flex;
+  flex-direction: column;
+  text-align: left;
+  flex-grow: 1;
+}
+
+.suggestion-name {
+  font-size: 0.88rem;
+  font-weight: 600;
+  color: var(--text-primary);
+}
+
+.suggestion-nickname {
+  font-size: 0.75rem;
+  color: var(--text-muted);
+  font-style: italic;
+}
+
+.suggestion-mshs {
+  font-size: 0.72rem;
+  color: var(--text-muted);
+  font-family: monospace;
+}
