@@ -1,9 +1,10 @@
 import { useState, useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { motion } from 'framer-motion';
-import { Search, X, Loader2, Printer } from 'lucide-react';
+import { Search, X, Printer } from 'lucide-react';
 import { supabase } from '../lib/supabase';
 import { localMembers } from '../data/members';
+import { MembersSkeleton } from '../components/Skeleton';
 import './Pages.css';
 
 const Members = () => {
@@ -94,9 +95,7 @@ const Members = () => {
       </motion.div>
 
       {loading ? (
-        <div className="flex-center" style={{ padding: '4rem' }}>
-          <Loader2 size={32} className="spin-icon" style={{ color: 'var(--ptnk-blue)' }} />
-        </div>
+        <MembersSkeleton count={12} />
       ) : (
         <motion.div
           className="members-grid"

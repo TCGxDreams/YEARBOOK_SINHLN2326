@@ -3,6 +3,7 @@ import { motion, AnimatePresence } from 'framer-motion';
 import { PenTool, X, Send, Heart, Loader2, ChevronDown, ChevronUp, Search, MessageSquare } from 'lucide-react';
 import { supabase } from '../lib/supabase';
 import { useAuth } from '../contexts/AuthContext';
+import { MessagesSkeleton } from '../components/Skeleton';
 import './Pages.css';
 
 const MAX_LENGTH = 150;
@@ -520,9 +521,7 @@ const Messages = () => {
 
       {/* Loading state */}
       {loading ? (
-        <div className="flex-center" style={{ padding: '4rem' }}>
-          <Loader2 size={32} className="spin-icon" style={{ color: 'var(--ptnk-blue)' }} />
-        </div>
+        <MessagesSkeleton count={6} />
       ) : messages.length === 0 ? (
         <div className="empty-state text-center" style={{ padding: '4rem 1.5rem' }}>
           <MessageSquare size={48} style={{ display: 'block', margin: '0 auto 1rem', opacity: 0.5 }} />

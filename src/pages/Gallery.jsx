@@ -54,6 +54,7 @@ const Gallery = () => {
   const touchStartX = useRef(null);                  // ⭐ swipe state
   const [page, setPage] = useState(0);
   const [loadingMore, setLoadingMore] = useState(false);
+  const [hasMore, setHasMore] = useState(false);
   const [likedItems, setLikedItems] = useState([]);
   const [editingItem, setEditingItem] = useState(null);
   const [editCaption, setEditCaption] = useState('');
@@ -78,24 +79,13 @@ const Gallery = () => {
     handleTagChange();
   }, [handleTagChange]);
 
-  const filtered =
-    filter === 'all'
-      ? items
-      : filter === 'tagged'
-        ? items.filter(it => taggedKeys.has(`${it.type}-${it.id}`))
-        : items.filter(it => it.category === filter);
-  const displayedItems = filtered.slice(0, (page + 1) * 12);
-  const hasMore = (page + 1) * 12 < filtered.length;
-
-  useEffect(() => {
-    setPage(0);
-  }, [filter]);
+  const displayedItems = items;
 
   // ════════════════════════════════════════════════════════════
   // Fetch + Realtime
   // ════════════════════════════════════════════════════════════
+  // Load liked items on mount
   useEffect(() => {
-    // Load liked items from localStorage
     const saved = localStorage.getItem('liked_gallery_items');
     if (saved) {
       try {
@@ -104,10 +94,16 @@ const Gallery = () => {
         setLikedItems([]);
       }
     }
+  }, []);
 
+  // Fetch page 0 when filter or member changes
+  useEffect(() => {
     setPage(0);
-    fetchItems(true);
+    fetchItems(0, true);
+  }, [filter, member?.mshs]);
 
+  // Realtime subscriptions
+  useEffect(() => {
     const galleryChannel = supabase
       .channel('gallery-realtime')
       .on('postgres_changes',
@@ -128,63 +124,92 @@ const Gallery = () => {
       supabase.removeChannel(galleryChannel);
       supabase.removeChannel(videosChannel);
     };
-    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [member?.mshs]);
 
   function handleRealtimeChange(payload, type) {
-    const { eventType, new: newRow, old: oldRow } = payload;
+    const { eventType, new: newRow } = payload;
+
+    // Reload page 0 on postgres change
+    setPage(0);
+    fetchItems(0, true);
 
     if (eventType === 'INSERT') {
-      setItems(prev => {
-        if (prev.some(it => it.id === newRow.id && it.type === type)) return prev;
-        const updated = [{ ...newRow, type }, ...prev];
-        return updated.sort((a, b) => new Date(b.created_at) - new Date(a.created_at));
-      });
       if (newRow.uploaded_by !== member?.mshs) {
         const who = newRow.uploaded_by_name || 'Ai đó';
         toast.info(`${who} vừa thêm ${type === 'video' ? 'video' : 'ảnh'} mới!`);
       }
-    } else if (eventType === 'DELETE') {
-      setItems(prev => prev.filter(it => !(it.id === oldRow.id && it.type === type)));
-    } else if (eventType === 'UPDATE') {
-      setItems(prev => prev.map(it =>
-        it.id === newRow.id && it.type === type ? { ...newRow, type } : it
-      ));
     }
   }
 
-  async function fetchItems(isInitial = false) {
+  async function fetchItems(pageNum = 0, isInitial = false) {
     if (isInitial) {
       setLoading(true);
+    } else {
+      setLoadingMore(true);
     }
 
     try {
-      const [galleryRes, videosRes] = await Promise.all([
-        supabase.from('gallery').select('*').order('created_at', { ascending: false }),
-        supabase.from('videos').select('*').order('created_at', { ascending: false }),
-      ]);
+      let query = supabase
+        .from('media_feed')
+        .select('*')
+        .order('created_at', { ascending: false });
 
-      const images = (galleryRes.data || []).map(img => ({ ...img, type: 'image' }));
-      const videos = (videosRes.data || []).map(vid => ({ ...vid, type: 'video' }));
+      if (filter === 'tagged') {
+        if (member?.mshs) {
+          const { data: tagsData, error: tagsErr } = await supabase
+            .from('photo_tags')
+            .select('media_id')
+            .eq('member_mshs', member.mshs);
+          if (tagsErr) throw tagsErr;
 
-      const merged = [...images, ...videos].sort(
-        (a, b) => new Date(b.created_at) - new Date(a.created_at)
-      );
+          const mediaIds = (tagsData || []).map(t => t.media_id);
+          if (mediaIds.length > 0) {
+            query = query.in('id', mediaIds);
+          } else {
+            setItems([]);
+            setHasMore(false);
+            return;
+          }
+        } else {
+          setItems([]);
+          setHasMore(false);
+          return;
+        }
+      } else if (filter !== 'all') {
+        query = query.eq('category', filter);
+      }
 
-      setItems(merged);
+      // Range query
+      const from = pageNum * 12;
+      const to = from + 11;
+      query = query.range(from, to);
+
+      const { data, error } = await query;
+      if (error) throw error;
+
+      if (isInitial) {
+        setItems(data || []);
+      } else {
+        setItems(prev => {
+          const existingIds = new Set(prev.map(it => `${it.type}-${it.id}`));
+          const newItems = (data || []).filter(it => !existingIds.has(`${it.type}-${it.id}`));
+          return [...prev, ...newItems];
+        });
+      }
+      setHasMore((data || []).length === 12);
     } catch (e) {
       console.warn('Gallery fetch error:', e);
       toast.error('Không tải được kỷ niệm. Thử lại sau nhé.');
+    } finally {
+      setLoading(false);
+      setLoadingMore(false);
     }
-    setLoading(false);
   }
 
   const handleLoadMore = () => {
-    setLoadingMore(true);
-    setTimeout(() => {
-      setPage(prev => prev + 1);
-      setLoadingMore(false);
-    }, 400);
+    const nextPage = page + 1;
+    setPage(nextPage);
+    fetchItems(nextPage, false);
   };
 
   // ════════════════════════════════════════════════════════════
@@ -290,8 +315,9 @@ const Gallery = () => {
           .single();
 
         if (error) throw error;
-        setItems(prev => [{ ...data, type: 'video' }, ...prev]);
         toast.success('Đã tải video lên!');
+        setPage(0);
+        fetchItems(0, true);
       } else {
         setUploadStatus('Đang tải ảnh lên...');
         const result = await uploadPhoto(selectedFile, member.mshs, (progress) => {
@@ -315,8 +341,9 @@ const Gallery = () => {
           .select()
           .single();
         if (dbError) throw dbError;
-        setItems(prev => [{ ...data, type: 'image' }, ...prev]);
         toast.success(result.source === 'drive' ? 'Đã tải ảnh lên (qua Google Drive)!' : 'Đã tải ảnh lên!');
+        setPage(0);
+        fetchItems(0, true);
       }
 
       setShowUpload(false);
@@ -636,6 +663,7 @@ const Gallery = () => {
                     src={driveThumbnail(item.drive_file_id)}
                     alt={item.caption}
                     loading="lazy"
+                    decoding="async"
                     onClick={() => setLightbox(item)}
                     onError={(e) => { e.target.style.background = '#1a202c'; e.target.src = ''; }}
                   />
@@ -645,9 +673,10 @@ const Gallery = () => {
                 </>
               ) : (
                 <img
-                  src={getPhotoSrc(item, 800)}
+                  src={getPhotoSrc(item, 480)}
                   alt={item.caption}
                   loading="lazy"
+                  decoding="async"
                   onClick={() => setLightbox(item)}
                   onError={(e) => { e.target.style.background = '#1a202c'; }}
                 />

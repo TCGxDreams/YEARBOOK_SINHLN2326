@@ -30,3 +30,29 @@ create policy "photo_tags delete" on public.photo_tags
         and m.role = 'admin'
     )
   );
+
+-- ── View gộp gallery + videos để phân trang thống nhất ở server ──────
+create or replace view public.media_feed as
+select 
+  id::text as id,
+  caption,
+  category,
+  image_url,
+  drive_file_id,
+  uploaded_by,
+  uploaded_by_name,
+  created_at,
+  'image' as type
+from public.gallery
+union all
+select 
+  id::text as id,
+  caption,
+  category,
+  null as image_url,
+  drive_file_id,
+  uploaded_by,
+  uploaded_by_name,
+  created_at,
+  'video' as type
+from public.videos;

@@ -46,11 +46,13 @@ export function AuthProvider({ children }) {
       setLoading(false);
     });
 
-    const { data: { subscription } } = supabase.auth.onAuthStateChange((_event, session) => {
+    const { data: { subscription } } = supabase.auth.onAuthStateChange((event, session) => {
       const u = session?.user ?? null;
       setUser(u);
       if (u) {
-        fetchMember(u.email);
+        if (event === 'SIGNED_IN') {
+          fetchMember(u.email);
+        }
       } else {
         setMember(null);
         setIsAdmin(false);
