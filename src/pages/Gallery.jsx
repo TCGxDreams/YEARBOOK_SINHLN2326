@@ -11,6 +11,8 @@ import { uploadVideoToDrive } from '../lib/uploadVideo';
 import { uploadPhoto, getPhotoSrc } from '../lib/uploadPhoto';
 import { GallerySkeleton } from '../components/Skeleton';
 import './Pages.css';
+import PhotoTags from '../components/PhotoTags';
+import { fetchTaggedKeys } from '../lib/photoTags';
 
 const CATEGORIES = [
   { key: 'all', label: 'Tất cả' },
@@ -57,6 +59,7 @@ const Gallery = () => {
   const [editCaption, setEditCaption] = useState('');
   const [editCategory, setEditCategory] = useState('other');
   const [isMobile, setIsMobile] = useState(window.innerWidth <= 768);
+  const [taggedKeys, setTaggedKeys] = useState(new Set());
 
   useEffect(() => {
     const handleResize = () => setIsMobile(window.innerWidth <= 768);
@@ -64,7 +67,23 @@ const Gallery = () => {
     return () => window.removeEventListener('resize', handleResize);
   }, []);
 
-  const filtered = filter === 'all' ? items : items.filter(it => it.category === filter);
+  const handleTagChange = useCallback(() => {
+    if (member?.mshs) {
+      fetchTaggedKeys(member.mshs).then(setTaggedKeys);
+    }
+  }, [member?.mshs]);
+
+  // Fetch danh sách "type-id" mà user được tag (cho filter "Ảnh có tôi")
+  useEffect(() => {
+    handleTagChange();
+  }, [handleTagChange]);
+
+  const filtered =
+    filter === 'all'
+      ? items
+      : filter === 'tagged'
+        ? items.filter(it => taggedKeys.has(`${it.type}-${it.id}`))
+        : items.filter(it => it.category === filter);
   const displayedItems = filtered.slice(0, (page + 1) * 12);
   const hasMore = (page + 1) * 12 < filtered.length;
 
@@ -452,6 +471,14 @@ const Gallery = () => {
                 {cat.label}
               </button>
             ))}
+            {member && (
+              <button
+                className={`filter-tab ${filter === 'tagged' ? 'active' : ''}`}
+                onClick={() => setFilter('tagged')}
+              >
+                Ảnh có tôi
+              </button>
+            )}
           </div>
           <motion.button
             className="btn btn-primary btn-upload"
@@ -851,6 +878,7 @@ const Gallery = () => {
                   </button>
                 </div>
                 {lightbox.uploaded_by_name && <div className="lightbox-author">{lightbox.uploaded_by_name}</div>}
+                <PhotoTags media={lightbox} onTagChange={handleTagChange} />
               </div>
 
               {/* Hint phím tắt (chỉ desktop) */}

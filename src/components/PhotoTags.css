@@ -1,0 +1,70 @@
+.phototags { margin-top: 0.85rem; width: 100%; max-width: 520px; text-align: left; }
+
+.phototags-head {
+  display: flex; align-items: center; gap: 0.4rem;
+  font-size: 0.75rem; color: rgba(255,255,255,0.55);
+  font-family: 'Be Vietnam Pro', sans-serif; margin-bottom: 0.5rem;
+}
+
+.phototags-chips { display: flex; flex-wrap: wrap; gap: 0.4rem; align-items: center; }
+
+.phototag-chip {
+  display: inline-flex; align-items: center; gap: 0.3rem;
+  padding: 0.25rem 0.55rem; border-radius: 9999px;
+  background: rgba(255,255,255,0.14); border: 1px solid rgba(255,255,255,0.18);
+  color: #fff; font-size: 0.78rem; font-family: 'Be Vietnam Pro', sans-serif;
+  backdrop-filter: blur(6px);
+}
+.phototag-remove {
+  display: inline-flex; align-items: center; justify-content: center;
+  background: none; border: none; color: rgba(255,255,255,0.7); cursor: pointer; padding: 0; line-height: 0;
+}
+.phototag-remove:hover { color: #ef4444; }
+
+.phototag-add {
+  display: inline-flex; align-items: center; gap: 0.3rem;
+  padding: 0.25rem 0.6rem; border-radius: 9999px;
+  background: rgba(70,130,220,0.25); border: 1px dashed rgba(255,255,255,0.3);
+  color: #fff; font-size: 0.76rem; font-family: 'Be Vietnam Pro', sans-serif; cursor: pointer;
+  transition: background 0.15s ease;
+}
+.phototag-add:hover { background: rgba(70,130,220,0.45); }
+
+.phototags-empty { font-size: 0.78rem; color: rgba(255,255,255,0.4); font-style: italic; }
+
+.phototags-picker {
+  margin-top: 0.6rem; background: rgba(18,24,32,0.97);
+  border: 1px solid rgba(255,255,255,0.12); border-radius: 12px;
+  overflow: hidden; box-shadow: 0 12px 32px rgba(0,0,0,0.45);
+}
+.phototags-search {
+  display: flex; align-items: center; gap: 0.5rem; padding: 0.6rem 0.8rem;
+  border-bottom: 1px solid rgba(255,255,255,0.08); color: rgba(255,255,255,0.6);
+}
+.phototags-search input {
+  flex: 1; background: transparent; border: none; outline: none; color: #fff;
+  font-family: 'Be Vietnam Pro', sans-serif; font-size: 0.85rem;
+}
+.phototags-search input::placeholder { color: rgba(255,255,255,0.4); }
+
+.phototags-list { max-height: 220px; overflow-y: auto; }
+.phototags-option {
+  display: flex; align-items: center; gap: 0.6rem; width: 100%;
+  padding: 0.5rem 0.8rem; background: none; border: none; cursor: pointer; color: #fff;
+  text-align: left; transition: background 0.12s ease;
+}
+.phototags-option:hover:not(:disabled) { background: rgba(255,255,255,0.08); }
+.phototags-option:disabled { opacity: 0.5; cursor: default; }
+
+.phototags-ava, .phototags-ava-img { width: 26px; height: 26px; border-radius: 50%; flex-shrink: 0; }
+.phototags-ava {
+  display: flex; align-items: center; justify-content: center; color: #fff;
+  font-size: 0.72rem; font-weight: 700; font-family: 'Be Vietnam Pro', sans-serif;
+}
+.phototags-ava-img { object-fit: cover; }
+.phototags-opt-name {
+  flex: 1; font-size: 0.85rem; font-family: 'Be Vietnam Pro', sans-serif;
+  white-space: nowrap; overflow: hidden; text-overflow: ellipsis;
+}
+.phototags-opt-mshs { font-size: 0.72rem; color: rgba(255,255,255,0.45); font-family: monospace; }
+.phototags-noresult { padding: 0.8rem; text-align: center; font-size: 0.82rem; color: rgba(255,255,255,0.45); }
