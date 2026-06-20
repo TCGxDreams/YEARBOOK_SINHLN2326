@@ -648,7 +648,7 @@ const Gallery = () => {
       {/* Grid */}
       {loading ? (
         <GallerySkeleton count={9} />
-      ) : filtered.length === 0 ? (
+      ) : displayedItems.length === 0 ? (
         <div className="empty-state text-center">
           <ImageIcon size={48} style={{ display: 'block', margin: '0 auto 1rem', opacity: 0.5 }} />
           <p>Chưa có ảnh/video nào{filter !== 'all' ? ' trong danh mục này' : ''}. Hãy thêm kỷ niệm đầu tiên!</p>
@@ -731,7 +731,7 @@ const Gallery = () => {
       )}
 
       {/* Load More Button */}
-      {!loading && hasMore && filtered.length > 0 && (
+      {!loading && hasMore && displayedItems.length > 0 && (
         <div className="flex-center" style={{ marginTop: '3rem' }}>
           <button
             className="btn btn-outline"
