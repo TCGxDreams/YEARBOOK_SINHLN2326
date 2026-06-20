@@ -32,6 +32,7 @@ create policy "photo_tags delete" on public.photo_tags
   );
 
 -- ── View gộp gallery + videos để phân trang thống nhất ở server ──────
+drop view if exists public.media_feed;
 create or replace view public.media_feed as
 select 
   id::text as id,
