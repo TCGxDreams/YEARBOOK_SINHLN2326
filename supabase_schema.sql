@@ -41,6 +41,7 @@ select
   drive_file_id,
   uploaded_by,
   uploaded_by_name,
+  likes,
   created_at,
   'image' as type
 from public.gallery
@@ -53,6 +54,7 @@ select
   drive_file_id,
   uploaded_by,
   uploaded_by_name,
+  likes,
   created_at,
   'video' as type
 from public.videos;
