@@ -883,31 +883,35 @@ const Gallery = () => {
               )}
 
               <div className="lightbox-info">
-                <div style={{ display: 'flex', alignItems: 'center', gap: '0.5rem', flexWrap: 'wrap' }}>
-                  {lightbox.caption ? (
-                    <div className="lightbox-caption">{lightbox.caption}</div>
-                  ) : (
-                    <div className="lightbox-caption" style={{ fontStyle: 'italic', opacity: 0.6 }}>Chưa có tiêu đề</div>
-                  )}
-                  {(isAdmin || lightbox.uploaded_by === member?.mshs || lightbox.uploaded_by_name === 'Everyone') && (
+                <div className="lightbox-info-left">
+                  <div style={{ display: 'flex', alignItems: 'center', gap: '0.5rem', flexWrap: 'wrap' }}>
+                    {lightbox.caption ? (
+                      <span className="lightbox-caption">{lightbox.caption}</span>
+                    ) : (
+                      <span className="lightbox-caption" style={{ fontStyle: 'italic', opacity: 0.6 }}>Chưa có tiêu đề</span>
+                    )}
+                    {(isAdmin || lightbox.uploaded_by === member?.mshs || lightbox.uploaded_by_name === 'Everyone') && (
+                      <button 
+                        onClick={() => handleEditCaption(lightbox)}
+                        style={{ background: 'none', border: 'none', color: 'rgba(255,255,255,0.7)', display: 'inline-flex', alignItems: 'center', cursor: 'pointer', padding: '2px' }}
+                        title="Sửa tiêu đề"
+                      >
+                        <Edit3 size={16} />
+                      </button>
+                    )}
                     <button 
-                      onClick={() => handleEditCaption(lightbox)}
+                      onClick={() => handleDownload(lightbox)}
                       style={{ background: 'none', border: 'none', color: 'rgba(255,255,255,0.7)', display: 'inline-flex', alignItems: 'center', cursor: 'pointer', padding: '2px' }}
-                      title="Sửa tiêu đề"
+                      title="Tải về máy"
                     >
-                      <Edit3 size={16} />
+                      <Download size={16} />
                     </button>
-                  )}
-                  <button 
-                    onClick={() => handleDownload(lightbox)}
-                    style={{ background: 'none', border: 'none', color: 'rgba(255,255,255,0.7)', display: 'inline-flex', alignItems: 'center', cursor: 'pointer', padding: '2px' }}
-                    title="Tải về máy"
-                  >
-                    <Download size={16} />
-                  </button>
+                  </div>
+                  {lightbox.uploaded_by_name && <div className="lightbox-author">{lightbox.uploaded_by_name}</div>}
                 </div>
-                {lightbox.uploaded_by_name && <div className="lightbox-author">{lightbox.uploaded_by_name}</div>}
-                <PhotoTags media={lightbox} onTagChange={handleTagChange} />
+                <div className="lightbox-info-right">
+                  <PhotoTags media={lightbox} onTagChange={handleTagChange} />
+                </div>
               </div>
 
               {/* Hint phím tắt (chỉ desktop) */}

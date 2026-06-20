@@ -544,21 +544,71 @@ body.dark-mode .member-role {
 }
 
 .lightbox-caption {
-  text-align: center;
-  color: rgba(255, 255, 255, 0.85);
-  margin-top: 1rem;
-  font-size: 1rem;
-  font-weight: 500;
+  color: rgba(255, 255, 255, 0.95);
+  font-size: 1.1rem;
+  font-weight: 600;
+  text-align: left;
 }
 
 .lightbox-info {
-  text-align: center;
-  margin-top: 0.5rem;
+  display: flex;
+  justify-content: space-between;
+  align-items: flex-start;
+  gap: 1.5rem;
+  margin-top: 1rem;
+  text-align: left;
+  padding: 0 0.25rem;
+}
+
+.lightbox-info-left {
+  display: flex;
+  flex-direction: column;
+  align-items: flex-start;
+  gap: 0.25rem;
+  flex: 1 1 200px;
+}
+
+.lightbox-info-right {
+  display: flex;
+  flex-direction: column;
+  align-items: flex-end;
+  flex: 1 1 250px;
+}
+
+.lightbox-info-right .phototags {
+  margin-top: 0;
+  width: 100%;
+}
+
+.lightbox-info-right .phototags-head {
+  justify-content: flex-end;
+}
+
+.lightbox-info-right .phototags-chips {
+  justify-content: flex-end;
 }
 
 .lightbox-author {
   color: rgba(255, 255, 255, 0.5);
   font-size: 0.85rem;
+  text-align: left;
+}
+
+@media (max-width: 768px) {
+  .lightbox-info {
+    flex-direction: column;
+    align-items: stretch;
+    gap: 1rem;
+  }
+  .lightbox-info-right {
+    align-items: flex-start;
+  }
+  .lightbox-info-right .phototags-head {
+    justify-content: flex-start;
+  }
+  .lightbox-info-right .phototags-chips {
+    justify-content: flex-start;
+  }
 }
 
 /* ─── Gallery Toolbar ──────────────────────── */
