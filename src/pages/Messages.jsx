@@ -8,6 +8,8 @@ import './Pages.css';
 
 const MAX_LENGTH = 150;
 
+const isHoverable = typeof window !== 'undefined' ? window.matchMedia('(hover: hover)').matches : true;
+
 /* ─── Message Note with collapse/expand ────── */
 const MessageNote = ({ msg, index, noteColors, pinColors, handleLike, isLiked, formatDate, itemVariants }) => {
   const [expanded, setExpanded] = useState(false);
@@ -24,7 +26,7 @@ const MessageNote = ({ msg, index, noteColors, pinColors, handleLike, isLiked, f
         '--note-color': noteColors[index % noteColors.length],
         '--pin-color': pinColors[index % pinColors.length],
       }}
-      whileHover={{ scale: 1.03, rotate: 0, zIndex: 10 }}
+      whileHover={isHoverable ? { scale: 1.03, rotate: 0, zIndex: 10 } : undefined}
     >
       <div className="note-header">
         <div className="note-author">{msg.author}</div>

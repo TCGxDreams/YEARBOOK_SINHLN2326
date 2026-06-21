@@ -7,6 +7,8 @@ import { localMembers } from '../data/members';
 import { MembersSkeleton } from '../components/Skeleton';
 import './Pages.css';
 
+const isHoverable = typeof window !== 'undefined' ? window.matchMedia('(hover: hover)').matches : true;
+
 const Members = () => {
   const navigate = useNavigate();
   const [searchTerm, setSearchTerm] = useState('');
@@ -110,7 +112,7 @@ const Members = () => {
               className="member-card glass-card premium-member-card"
               variants={itemVariants}
               onClick={() => navigate(`/members/${member.mshs}`)}
-              whileHover={{ y: -5, scale: 1.02 }}
+              whileHover={isHoverable ? { y: -5, scale: 1.02 } : undefined}
               whileTap={{ scale: 0.98 }}
             >
               <div className="member-card-header" style={{ background: `linear-gradient(135deg, ${member.color}22, transparent)` }}>
