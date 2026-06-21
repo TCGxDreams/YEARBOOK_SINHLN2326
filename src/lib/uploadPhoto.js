@@ -1,11 +1,12 @@
 import { supabase } from './supabase';
 import { uploadVideoToDrive } from './uploadVideo';
+import { compressImage } from './compressImage';
 
 /**
  * ════════════════════════════════════════════════════════════
  * Upload ảnh với fallback tự động:
  *   1. Thử Supabase Storage trước (nhanh, miễn phí cho scale nhỏ)
- *   2. Nếu Supabase hết quota / file > 45MB → fallback lên Drive
+ *   2. Nếu Supabase hết quota / file > 10MB → fallback lên Drive
  *
  * @param {File} file - File ảnh cần upload
  * @param {string} memberMshs - MSHS của user (làm folder path)
@@ -14,10 +15,15 @@ import { uploadVideoToDrive } from './uploadVideo';
  * ════════════════════════════════════════════════════════════
  */
 export async function uploadPhoto(file, memberMshs, onProgress) {
-    // ─── Shortcut: file > 45MB thì Supabase free tier không nhận (limit 50MB),
+    // Nén ảnh trước khi upload (video/gif bỏ qua)
+    if (file.type.startsWith('image/')) {
+        file = await compressImage(file);
+    }
+
+    // ─── Shortcut: file > 10MB thì Supabase free tier không nhận (limit 50MB),
     //              dùng Drive luôn cho đỡ tốn 1 vòng try-catch ───
-    if (file.size > 45 * 1024 * 1024) {
-        console.warn('[uploadPhoto] File > 45MB → Drive luôn');
+    if (file.size > 10 * 1024 * 1024) {
+        console.warn('[uploadPhoto] File > 10MB → Drive luôn');
         const drive_file_id = await uploadVideoToDrive(file, onProgress);
         return { source: 'drive', drive_file_id };
     }
@@ -32,7 +38,7 @@ export async function uploadPhoto(file, memberMshs, onProgress) {
             .from('gallery')
             .upload(path, file, {
                 contentType: file.type,
-                cacheControl: '3600',
+                cacheControl: '31536000',
             });
 
         if (error) throw error;

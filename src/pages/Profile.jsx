@@ -4,6 +4,7 @@ import { User, Edit3, Save, X, Shield, Key, Quote, BookOpen, Loader2, CheckCircl
 import { useAuth } from '../contexts/AuthContext';
 import { supabase } from '../lib/supabase';
 import { uploadVideoToDrive } from '../lib/uploadVideo';
+import { compressImage } from '../lib/compressImage';
 import './Panel.css';
 
 const Profile = () => {
@@ -49,7 +50,7 @@ const Profile = () => {
   };
 
   const handleAvatarUpload = async (e) => {
-    const file = e.target.files?.[0];
+    let file = e.target.files?.[0];
     if (!file) return;
 
     // Validate size limit (50MB)
@@ -68,6 +69,11 @@ const Profile = () => {
     setUploadProgress(0);
 
     try {
+      // Nén ảnh đại diện (giới hạn kích thước 512px cho avatar)
+      if (file.type.startsWith('image/')) {
+        file = await compressImage(file, { maxDim: 512 });
+      }
+
       let avatar_url = '';
       let uploaded = false;
 
@@ -88,7 +94,10 @@ const Profile = () => {
 
           const { error: uploadError } = await supabase.storage
             .from('gallery')
-            .upload(filePath, file, { upsert: true });
+            .upload(filePath, file, { 
+              upsert: true,
+              cacheControl: '31536000'
+            });
 
           if (uploadError) throw uploadError;
 
