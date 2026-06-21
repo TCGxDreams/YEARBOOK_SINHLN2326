@@ -4,6 +4,7 @@ import { useState } from 'react';
 import { Home, Users, Image as ImageIcon, BookHeart, Moon, Sun, Menu, X, LogOut, User, Shield } from 'lucide-react';
 import { useAuth } from '../contexts/AuthContext';
 import logo from '../assets/logo.png';
+import NotificationBell from './NotificationBell';
 import './Navbar.css';
 
 const Navbar = ({ darkMode, toggleDarkMode }) => {
@@ -84,6 +85,8 @@ const Navbar = ({ darkMode, toggleDarkMode }) => {
               <Shield size={18} />
             </Link>
           )}
+
+          <NotificationBell />
 
           <button
             className="theme-toggle"
