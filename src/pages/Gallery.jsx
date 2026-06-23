@@ -123,15 +123,37 @@ const Gallery = () => {
   function handleRealtimeChange(payload, type) {
     const { eventType, new: newRow } = payload;
 
-    // Reload page 0 on postgres change
-    setPage(0);
-    fetchItems(0, true);
-
     if (eventType === 'INSERT') {
+      if (filter === 'all' || filter === newRow.category) {
+        const formattedItem = {
+          ...newRow,
+          id: String(newRow.id),
+          type,
+          likes: newRow.likes || 0
+        };
+        setItems(prev => {
+          if (prev.some(it => it.id === formattedItem.id && it.type === formattedItem.type)) return prev;
+          return [formattedItem, ...prev];
+        });
+      }
       if (newRow.uploaded_by !== member?.mshs) {
         const who = newRow.uploaded_by_name || 'Ai đó';
         toast.info(`${who} vừa thêm ${type === 'video' ? 'video' : 'ảnh'} mới!`);
       }
+    } else if (eventType === 'UPDATE') {
+      setItems(prev => prev.map(it =>
+        (it.id === String(newRow.id) && it.type === type)
+          ? { ...it, ...newRow, id: String(newRow.id), type }
+          : it
+      ));
+      setLightbox(prev => (prev && prev.id === String(newRow.id) && prev.type === type)
+        ? { ...prev, ...newRow, id: String(newRow.id), type }
+        : prev
+      );
+    } else if (eventType === 'DELETE') {
+      const oldRow = payload.old;
+      setItems(prev => prev.filter(it => !(it.id === String(oldRow.id) && it.type === type)));
+      setLightbox(prev => (prev && prev.id === String(oldRow.id) && prev.type === type) ? null : prev);
     }
   }
 
