@@ -133,3 +133,53 @@ create policy "notif delete own" on public.notifications
 
 -- ── Bật realtime cho bảng (chạy 1 lần; nếu báo "đã tồn tại" thì bỏ qua) ──
 alter publication supabase_realtime add table public.notifications;
+
+-- ── Bảng ghi ai đã thích cái gì (1 người / 1 mục) ──────────────────
+create table if not exists public.likes (
+  target_type text not null check (target_type in ('image','video','message')),
+  target_id   text not null,
+  member_mshs text not null,
+  created_at  timestamptz not null default now(),
+  primary key (target_type, target_id, member_mshs)
+);
+create index if not exists likes_member_idx on public.likes (member_mshs);
+
+-- RLS: đọc được; còn ghi thì BẮT BUỘC qua hàm bên dưới
+alter table public.likes enable row level security;
+create policy "likes read" on public.likes for select to authenticated using (true);
+
+-- Hàm bật/tắt tim — atomic (hết race), giữ nguyên SỐ tim cũ, chặn tim trùng
+create or replace function public.toggle_like(p_type text, p_id text)
+returns jsonb language plpgsql security definer set search_path = public as $$
+declare
+  v_mshs text := replace(split_part(auth.jwt() ->> 'email', '@', 1), 'student', '');
+  v_exists boolean; v_liked boolean; v_likes int;
+begin
+  if v_mshs is null or v_mshs = '' then raise exception 'Not authenticated'; end if;
+
+  select exists(select 1 from public.likes
+    where target_type = p_type and target_id = p_id and member_mshs = v_mshs) into v_exists;
+
+  if v_exists then
+    delete from public.likes where target_type = p_type and target_id = p_id and member_mshs = v_mshs;
+    v_liked := false;
+  else
+    insert into public.likes (target_type, target_id, member_mshs) values (p_type, p_id, v_mshs);
+    v_liked := true;
+  end if;
+
+  if p_type = 'image' then
+    update public.gallery  set likes = greatest(0, coalesce(likes,0) + case when v_liked then 1 else -1 end)
+      where id::text = p_id returning likes into v_likes;
+  elsif p_type = 'video' then
+    update public.videos   set likes = greatest(0, coalesce(likes,0) + case when v_liked then 1 else -1 end)
+      where id::text = p_id returning likes into v_likes;
+  elsif p_type = 'message' then
+    update public.messages set likes = greatest(0, coalesce(likes,0) + case when v_liked then 1 else -1 end)
+      where id::text = p_id returning likes into v_likes;
+  end if;
+
+  return jsonb_build_object('liked', v_liked, 'likes', coalesce(v_likes, 0));
+end; $$;
+
+grant execute on function public.toggle_like(text, text) to authenticated;

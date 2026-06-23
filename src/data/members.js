@@ -81,3 +81,6 @@ export const ADMIN_MSHS = '232433';
 export function extractMshs(email) {
   return email?.split('@')[0]?.replace('student', '') || '';
 }
+
+// Số thành viên (học sinh, không tính giáo viên) — tự tính từ danh sách
+export const MEMBER_COUNT = localMembers.filter(m => m.role !== 'teacher').length;

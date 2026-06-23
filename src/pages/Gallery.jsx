@@ -13,6 +13,7 @@ import { GallerySkeleton } from '../components/Skeleton';
 import './Pages.css';
 import PhotoTags from '../components/PhotoTags';
 import { fetchTaggedKeys } from '../lib/photoTags';
+import { fetchMyLikes, toggleLike } from '../lib/likes';
 
 const CATEGORIES = [
   { key: 'all', label: 'Tất cả' },
@@ -55,7 +56,7 @@ const Gallery = () => {
   const [page, setPage] = useState(0);
   const [loadingMore, setLoadingMore] = useState(false);
   const [hasMore, setHasMore] = useState(false);
-  const [likedItems, setLikedItems] = useState([]);
+  const [likedKeys, setLikedKeys] = useState(new Set());
   const [editingItem, setEditingItem] = useState(null);
   const [editCaption, setEditCaption] = useState('');
   const [editCategory, setEditCategory] = useState('other');
@@ -84,17 +85,10 @@ const Gallery = () => {
   // ════════════════════════════════════════════════════════════
   // Fetch + Realtime
   // ════════════════════════════════════════════════════════════
-  // Load liked items on mount
+  // Load liked items on mount from Supabase
   useEffect(() => {
-    const saved = localStorage.getItem('liked_gallery_items');
-    if (saved) {
-      try {
-        setLikedItems(JSON.parse(saved));
-      } catch (e) {
-        setLikedItems([]);
-      }
-    }
-  }, []);
+    fetchMyLikes(member?.mshs).then(setLikedKeys);
+  }, [member?.mshs]);
 
   // Fetch page 0 when filter or member changes
   useEffect(() => {
@@ -362,23 +356,21 @@ const Gallery = () => {
 
   async function handleLike(item) {
     const key = `${item.type}-${item.id}`;
-    if (likedItems.includes(key)) return;
-
-    const newLiked = [...likedItems, key];
-    setLikedItems(newLiked);
-    localStorage.setItem('liked_gallery_items', JSON.stringify(newLiked));
-
-    const table = item.type === 'video' ? 'videos' : 'gallery';
-    setItems(prev => prev.map(it =>
-      it.id === item.id && it.type === item.type
-        ? { ...it, likes: (it.likes || 0) + 1 }
-        : it
-    ));
+    const was = likedKeys.has(key);
+    setLikedKeys(prev => { const n = new Set(prev); was ? n.delete(key) : n.add(key); return n; });
+    setItems(prev => prev.map(it => it.id === item.id && it.type === item.type
+      ? { ...it, likes: Math.max(0, (it.likes || 0) + (was ? -1 : 1)) } : it));
     try {
-      const { error } = await supabase.from(table).update({ likes: (item.likes || 0) + 1 }).eq('id', item.id);
-      if (error) console.error(`Error updating likes on ${table}:`, error);
+      const { liked, likes } = await toggleLike(item.type, item.id);
+      setLikedKeys(prev => { const n = new Set(prev); liked ? n.add(key) : n.delete(key); return n; });
+      setItems(prev => prev.map(it => it.id === item.id && it.type === item.type ? { ...it, likes } : it));
+      setLightbox(prev => (prev && prev.id === item.id && prev.type === item.type ? { ...prev, likes } : prev));
     } catch (e) {
-      console.error('Error in handleLike:', e);
+      console.error('[Gallery] toggleLike:', e);
+      setLikedKeys(prev => { const n = new Set(prev); was ? n.add(key) : n.delete(key); return n; });
+      setItems(prev => prev.map(it => it.id === item.id && it.type === item.type
+        ? { ...it, likes: Math.max(0, (it.likes || 0) + (was ? 1 : -1)) } : it));
+      toast.error('Không cập nhật được lượt thích.');
     }
   }
 
@@ -691,14 +683,14 @@ const Gallery = () => {
 
               <div className="gallery-actions">
                 <button
-                  className={`gallery-like-btn ${likedItems.includes(`${item.type}-${item.id}`) ? 'liked' : ''}`}
+                  className={`gallery-like-btn ${likedKeys.has(`${item.type}-${item.id}`) ? 'liked' : ''}`}
                   onClick={e => { e.stopPropagation(); handleLike(item); }}
-                  style={{ cursor: likedItems.includes(`${item.type}-${item.id}`) ? 'default' : 'pointer' }}
+                  style={{ cursor: 'pointer' }}
                 >
                   <Heart
                     size={14}
-                    fill={likedItems.includes(`${item.type}-${item.id}`) ? '#ef4444' : 'none'}
-                    color={likedItems.includes(`${item.type}-${item.id}`) ? '#ef4444' : 'currentColor'}
+                    fill={likedKeys.has(`${item.type}-${item.id}`) ? '#ef4444' : 'none'}
+                    color={likedKeys.has(`${item.type}-${item.id}`) ? '#ef4444' : 'currentColor'}
                   />{' '}
                   {item.likes || 0}
                 </button>

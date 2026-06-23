@@ -3,7 +3,7 @@ import { useNavigate } from 'react-router-dom';
 import { motion } from 'framer-motion';
 import { Search, X, Printer } from 'lucide-react';
 import { supabase } from '../lib/supabase';
-import { localMembers } from '../data/members';
+import { localMembers, MEMBER_COUNT } from '../data/members';
 import { MembersSkeleton } from '../components/Skeleton';
 import './Pages.css';
 
@@ -64,7 +64,7 @@ const Members = () => {
         transition={{ duration: 0.6 }}
       >
         <h1 className="page-title">Gia đình SINHLN</h1>
-        <p className="page-subtitle">41 mảnh ghép làm nên thanh xuân rực rỡ nhất</p>
+        <p className="page-subtitle">{MEMBER_COUNT} mảnh ghép làm nên thanh xuân rực rỡ nhất</p>
 
         <div style={{ display: 'flex', gap: '1rem', justifyContent: 'center', alignItems: 'center', width: '100%', maxWidth: '600px', margin: '0 auto 1.5rem', flexWrap: 'wrap' }}>
           <div className="search-bar glass" style={{ margin: 0, flex: 1, minWidth: '280px' }}>

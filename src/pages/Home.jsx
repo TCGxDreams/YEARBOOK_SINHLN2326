@@ -7,6 +7,7 @@ import bentoGallery from '../assets/bento-gallery.jpg';
 import bentoMessages from '../assets/bento-messages.jpg';
 import classCollage from '../assets/class-collage.png';
 import ActivityFeed from '../components/ActivityFeed';     // ⭐ NEW
+import { MEMBER_COUNT } from '../data/members';
 import './Home.css';
 
 /* ─── Animated counter ────────────────── */
@@ -161,7 +162,7 @@ const Home = () => {
             transition={{ duration: 0.7, delay: 1.1 }}
             className="hero-signature"
           >
-            — viết bởi 41 trái tim của SINHLN —
+            — viết bởi {MEMBER_COUNT} trái tim của SINHLN —
           </motion.div>
         </div>
 
@@ -183,7 +184,7 @@ const Home = () => {
           viewport={{ once: true }}
           transition={{ duration: 0.7 }}
         >
-          <StatCard Icon={Users} value={41} label="Thành viên" />
+          <StatCard Icon={Users} value={MEMBER_COUNT} label="Thành viên" />
           <StatCard Icon={GraduationCap} value={3} label="Năm bên nhau" />
           <StatCard Icon={BookOpen} value={1000} label="Kỷ niệm" suffix="+" />
           <StatCard Icon={Heart} value={1} label="Gia đình duy nhất" />
@@ -220,7 +221,7 @@ const Home = () => {
               <span className="bento-label">01 — THÀNH VIÊN</span>
               <h3 className="bento-card-title">Gia Đình SINHLN</h3>
               <p className="bento-card-desc">
-                41 mảnh ghép tạo nên tập thể 12 Chuyên Sinh — mỗi người một cá tính, nhưng luôn gắn kết bền chặt.
+                {MEMBER_COUNT} mảnh ghép tạo nên tập thể 12 Chuyên Sinh — mỗi người một cá tính, nhưng luôn gắn kết bền chặt.
               </p>
             </div>
             <div className="bento-arrow">

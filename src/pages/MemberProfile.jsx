@@ -5,6 +5,8 @@ import { ChevronLeft, MessageSquare, Image as ImageIcon, Heart, Play, Key, User,
 import { supabase } from '../lib/supabase';
 import { localMembers } from '../data/members';
 import { useToast } from '../contexts/ToastContext';
+import { useAuth } from '../contexts/AuthContext';
+import { fetchMyLikes, toggleLike } from '../lib/likes';
 import './Panel.css'; // Reuses panel styles
 
 const driveThumbnail = (id) => `https://drive.google.com/thumbnail?id=${id}&sz=w400`;
@@ -13,6 +15,7 @@ const MemberProfile = () => {
   const { mshs } = useParams();
   const navigate = useNavigate();
   const toast = useToast();
+  const { member: currentUser } = useAuth();
   const [member, setMember] = useState(null);
   const [loading, setLoading] = useState(true);
   
@@ -24,17 +27,12 @@ const MemberProfile = () => {
   const [uploadedMedia, setUploadedMedia] = useState([]);
   const [loadingMedia, setLoadingMedia] = useState(true);
 
-  // Liked items tracking for local prevention
-  const [likedItems, setLikedItems] = useState([]);
+  // Liked items tracking
+  const [likedKeys, setLikedKeys] = useState(new Set());
 
   useEffect(() => {
-    // Load liked states from localStorage
-    const savedGallery = localStorage.getItem('liked_gallery_items');
-    const savedMsg = localStorage.getItem('liked_message_items');
-    const galleryLikes = savedGallery ? JSON.parse(savedGallery) : [];
-    const msgLikes = savedMsg ? JSON.parse(savedMsg) : [];
-    setLikedItems([...galleryLikes, ...msgLikes]);
-  }, []);
+    fetchMyLikes(currentUser?.mshs).then(setLikedKeys);
+  }, [currentUser?.mshs]);
 
   useEffect(() => {
     if (!mshs) return;
@@ -121,46 +119,25 @@ const MemberProfile = () => {
   }
 
   const handleLikeMessage = async (id) => {
-    if (likedItems.includes(id)) return;
-
-    setLikedItems(prev => [...prev, id]);
-    const saved = localStorage.getItem('liked_message_items');
-    const msgLikes = saved ? JSON.parse(saved) : [];
-    localStorage.setItem('liked_message_items', JSON.stringify([...msgLikes, id]));
-
-    setReceivedMessages(prev => prev.map(m =>
-      m.id === id ? { ...m, likes: (m.likes || 0) + 1 } : m
-    ));
-
+    const key = `message-${id}`; const was = likedKeys.has(key);
+    setLikedKeys(p => { const n = new Set(p); was ? n.delete(key) : n.add(key); return n; });
+    setReceivedMessages(p => p.map(m => m.id === id ? { ...m, likes: Math.max(0,(m.likes||0)+(was?-1:1)) } : m));
     try {
-      const msg = receivedMessages.find(m => m.id === id);
-      const { error } = await supabase.from('messages').update({ likes: (msg?.likes || 0) + 1 }).eq('id', id);
-      if (error) console.error('Error updating likes on messages:', error);
-    } catch (e) {
-      console.error('Error in handleLikeMessage:', e);
-    }
+      const { liked, likes } = await toggleLike('message', id);
+      setLikedKeys(p => { const n = new Set(p); liked ? n.add(key) : n.delete(key); return n; });
+      setReceivedMessages(p => p.map(m => m.id === id ? { ...m, likes } : m));
+    } catch { setLikedKeys(p => { const n = new Set(p); was ? n.add(key) : n.delete(key); return n; }); }
   };
 
   const handleLikeMedia = async (item) => {
-    const key = `${item.type}-${item.id}`;
-    if (likedItems.includes(key)) return;
-
-    setLikedItems(prev => [...prev, key]);
-    const saved = localStorage.getItem('liked_gallery_items');
-    const galleryLikes = saved ? JSON.parse(saved) : [];
-    localStorage.setItem('liked_gallery_items', JSON.stringify([...galleryLikes, key]));
-
-    setUploadedMedia(prev => prev.map(it =>
-      it.id === item.id && it.type === item.type ? { ...it, likes: (it.likes || 0) + 1 } : it
-    ));
-
-    const table = item.type === 'video' ? 'videos' : 'gallery';
+    const key = `${item.type}-${item.id}`; const was = likedKeys.has(key);
+    setLikedKeys(p => { const n = new Set(p); was ? n.delete(key) : n.add(key); return n; });
+    setUploadedMedia(p => p.map(it => it.id===item.id && it.type===item.type ? { ...it, likes: Math.max(0,(it.likes||0)+(was?-1:1)) } : it));
     try {
-      const { error } = await supabase.from(table).update({ likes: (item.likes || 0) + 1 }).eq('id', item.id);
-      if (error) console.error(`Error updating likes on ${table}:`, error);
-    } catch (e) {
-      console.error('Error in handleLikeMedia:', e);
-    }
+      const { liked, likes } = await toggleLike(item.type, item.id);
+      setLikedKeys(p => { const n = new Set(p); liked ? n.add(key) : n.delete(key); return n; });
+      setUploadedMedia(p => p.map(it => it.id===item.id && it.type===item.type ? { ...it, likes } : it));
+    } catch { setLikedKeys(p => { const n = new Set(p); was ? n.add(key) : n.delete(key); return n; }); }
   };
 
   if (loading) {
@@ -258,7 +235,7 @@ const MemberProfile = () => {
             ) : (
               <div className="member-received-messages-list" style={{ display: 'grid', gridTemplateColumns: '1fr', gap: '1rem', maxHeight: '400px', overflowY: 'auto', paddingRight: '0.25rem' }}>
                 {receivedMessages.map((msg, index) => {
-                  const isLiked = likedItems.includes(msg.id);
+                  const isLiked = likedKeys.has(`message-${msg.id}`);
                   return (
                     <div
                       key={msg.id}
@@ -283,8 +260,8 @@ const MemberProfile = () => {
                       <div className="note-footer" style={{ borderTop: '1px solid rgba(0,0,0,0.05)', paddingTop: '0.5rem', marginTop: '0.5rem' }}>
                         <button
                           className={`note-like-btn ${isLiked ? 'liked' : ''}`}
-                          onClick={() => { if (!isLiked) handleLikeMessage(msg.id); }}
-                          style={{ cursor: isLiked ? 'default' : 'pointer' }}
+                          onClick={() => handleLikeMessage(msg.id)}
+                          style={{ cursor: 'pointer' }}
                         >
                           <Heart size={12} fill={isLiked ? '#ef4444' : 'none'} color={isLiked ? '#ef4444' : 'currentColor'} /> {msg.likes || 0}
                         </button>
@@ -320,7 +297,7 @@ const MemberProfile = () => {
               <div className="member-uploaded-media-grid" style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fill, minmax(120px, 1fr))', gap: '0.75rem', maxHeight: '350px', overflowY: 'auto', paddingRight: '0.25rem' }}>
                 {uploadedMedia.map(item => {
                   const itemKey = `${item.type}-${item.id}`;
-                  const isLiked = likedItems.includes(itemKey);
+                  const isLiked = likedKeys.has(itemKey);
                   return (
                     <div key={itemKey} className="member-media-card" style={{ position: 'relative', borderRadius: 'var(--radius-sm)', overflow: 'hidden', height: '90px', border: '1px solid var(--border-color)' }}>
                       {item.type === 'video' ? (
@@ -341,8 +318,7 @@ const MemberProfile = () => {
                         </span>
                         <button
                           onClick={() => handleLikeMedia(item)}
-                          disabled={isLiked}
-                          style={{ background: 'none', border: 'none', color: 'white', display: 'flex', alignItems: 'center', gap: '0.15rem', padding: 0, fontSize: '0.7rem', cursor: isLiked ? 'default' : 'pointer' }}
+                          style={{ background: 'none', border: 'none', color: 'white', display: 'flex', alignItems: 'center', gap: '0.15rem', padding: 0, fontSize: '0.7rem', cursor: 'pointer' }}
                         >
                           <Heart size={10} fill={isLiked ? '#ef4444' : 'none'} color={isLiked ? '#ef4444' : 'white'} /> {item.likes || 0}
                         </button>

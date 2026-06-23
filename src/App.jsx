@@ -7,6 +7,7 @@ import Navbar from './components/Navbar';
 import Footer from './components/Footer';
 import ScrollToTop from './components/ScrollToTop';
 import AIChatbox from './components/AIChatbox';
+import ErrorBoundary from './components/ErrorBoundary';
 
 // Lazy loaded pages
 const Home = lazy(() => import('./pages/Home'));
@@ -83,13 +84,15 @@ function AppContent() {
     <div className="app-container">
       {showChrome && <Navbar darkMode={darkMode} toggleDarkMode={toggleDarkMode} />}
       <main>
-        <Suspense fallback={
-          <div className="loading-screen flex-center" style={{ minHeight: '50vh' }}>
-            <div className="login-spinner" style={{ width: 40, height: 40, borderWidth: 3, borderColor: 'var(--border-color)', borderTopColor: 'var(--ptnk-blue)' }} />
-          </div>
-        }>
-          <AnimatedRoutes />
-        </Suspense>
+        <ErrorBoundary key={location.pathname}>
+          <Suspense fallback={
+            <div className="loading-screen flex-center" style={{ minHeight: '50vh' }}>
+              <div className="login-spinner" style={{ width: 40, height: 40, borderWidth: 3, borderColor: 'var(--border-color)', borderTopColor: 'var(--ptnk-blue)' }} />
+            </div>
+          }>
+            <AnimatedRoutes />
+          </Suspense>
+        </ErrorBoundary>
       </main>
       {showChrome && <Footer />}
       {showChrome && <ScrollToTop />}

@@ -3,6 +3,7 @@ import { motion, AnimatePresence } from 'framer-motion';
 import { PenTool, X, Send, Heart, Loader2, ChevronDown, ChevronUp, Search, MessageSquare } from 'lucide-react';
 import { supabase } from '../lib/supabase';
 import { useAuth } from '../contexts/AuthContext';
+import { fetchMyLikes, toggleLike } from '../lib/likes';
 import { MessagesSkeleton } from '../components/Skeleton';
 import './Pages.css';
 
@@ -50,8 +51,8 @@ const MessageNote = ({ msg, index, noteColors, pinColors, handleLike, isLiked, f
       <div className="note-footer">
         <button
           className={`note-like-btn ${isLiked ? 'liked' : ''}`}
-          onClick={() => { if (!isLiked) handleLike(msg.id); }}
-          style={{ cursor: isLiked ? 'default' : 'pointer' }}
+          onClick={() => handleLike(msg.id)}
+          style={{ cursor: 'pointer' }}
         >
           <Heart size={14} fill={isLiked ? '#ef4444' : 'none'} color={isLiked ? '#ef4444' : 'currentColor'} /> {msg.likes || 0}
         </button>
@@ -87,19 +88,12 @@ const Messages = () => {
   const [hasMore, setHasMore] = useState(true);
   
   // Likes state
-  const [likedMessages, setLikedMessages] = useState([]);
+  const [likedKeys, setLikedKeys] = useState(new Set());
 
-  // Load liked messages from localStorage
+  // Load liked messages from Supabase
   useEffect(() => {
-    const saved = localStorage.getItem('liked_message_items');
-    if (saved) {
-      try {
-        setLikedMessages(JSON.parse(saved));
-      } catch (e) {
-        setLikedMessages([]);
-      }
-    }
-  }, []);
+    fetchMyLikes(member?.mshs).then(setLikedKeys);
+  }, [member?.mshs]);
 
   // Fetch members list for tagging suggestions
   useEffect(() => {
@@ -322,26 +316,18 @@ const Messages = () => {
   }
 
   async function handleLike(id) {
-    if (likedMessages.includes(id)) return;
-
-    const newLiked = [...likedMessages, id];
-    setLikedMessages(newLiked);
-    localStorage.setItem('liked_message_items', JSON.stringify(newLiked));
-
-    // Optimistic update
-    setMessages(prev => prev.map(m =>
-      m.id === id ? { ...m, likes: (m.likes || 0) + 1 } : m
-    ));
-
+    const key = `message-${id}`;
+    const was = likedKeys.has(key);
+    setLikedKeys(prev => { const n = new Set(prev); was ? n.delete(key) : n.add(key); return n; });
+    setMessages(prev => prev.map(m => m.id === id ? { ...m, likes: Math.max(0, (m.likes||0)+(was?-1:1)) } : m));
     try {
-      const msg = messages.find(m => m.id === id);
-      const { error } = await supabase
-        .from('messages')
-        .update({ likes: (msg?.likes || 0) + 1 })
-        .eq('id', id);
-      if (error) console.error('Error updating likes on messages:', error);
+      const { liked, likes } = await toggleLike('message', id);
+      setLikedKeys(prev => { const n = new Set(prev); liked ? n.add(key) : n.delete(key); return n; });
+      setMessages(prev => prev.map(m => m.id === id ? { ...m, likes } : m));
     } catch (err) {
-      console.error('Error in handleLike:', err);
+      console.error('toggleLike message:', err);
+      setLikedKeys(prev => { const n = new Set(prev); was ? n.add(key) : n.delete(key); return n; });
+      setMessages(prev => prev.map(m => m.id === id ? { ...m, likes: Math.max(0,(m.likes||0)+(was?1:-1)) } : m));
     }
   }
 
@@ -546,7 +532,7 @@ const Messages = () => {
                 noteColors={noteColors}
                 pinColors={pinColors}
                 handleLike={handleLike}
-                isLiked={likedMessages.includes(msg.id)}
+                isLiked={likedKeys.has(`message-${msg.id}`)}
                 formatDate={formatDate}
                 itemVariants={itemVariants}
               />
