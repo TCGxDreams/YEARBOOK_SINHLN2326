@@ -27,8 +27,8 @@ const Footer = () => {
 
           <div className="footer-contact">
             <h4>Liên Hệ</h4>
-            <a href="mailto:tcgxbill@gmail.com" className="footer-contact-link">
-              <Mail size={16} /> tcgxbill@gmail.com
+            <a href="mailto:cgxbill@gmail.com" className="footer-contact-link">
+              <Mail size={16} /> cgxbill@gmail.com
             </a>
             <a href="https://ptnk.edu.vn" target="_blank" rel="noopener noreferrer" className="footer-contact-link">
               <ExternalLink size={16} /> ptnk.edu.vn
